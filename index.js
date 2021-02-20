@@ -1,12 +1,12 @@
 const
-  Cch = require('./node/Cache'),
+  Cache = require('./node/Cache'),
   Is = require('./Is'),
   Log = require('./Log'),
   Riot4Compile = require('./node/Riot4Compile'),
   RiotMixin = require('./RiotMixin');
 
 module.exports = {
-  Cch,
+  Cache,
   Is,
   Log,
   Riot4Compile,
