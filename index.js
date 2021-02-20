@@ -1,3 +1,9 @@
-import Is from './Is.js';
+const Is = require('./Is'),
+      Log = require('./Log');
+      RiotMixin = require('./RiotMixin');
 
-export Is;
+module.exports = {
+  Is,
+  Log,
+  RiotMixin
+};
