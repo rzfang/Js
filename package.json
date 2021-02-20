@@ -1,0 +1,24 @@
+{
+  "name": "js",
+  "version": "0.0.1",
+  "description": "RZ's personal Js libraries.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rzfang/Js.git"
+  },
+  "keywords": [
+    "js",
+    "javascript",
+    "node.js"
+  ],
+  "author": "RZ Fang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rzfang/Js/issues"
+  },
+  "homepage": "https://github.com/rzfang/Js#readme"
+}
