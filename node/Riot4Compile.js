@@ -135,7 +135,7 @@ function Riot4ModulesCompile (FlPth, Then) {
   @ file path.
   @ type, can be 'node' or 'esm', default 'esm'.
   @ callback function (error code, code string). */
-function Riot4Compile (FlPth, Tp = 'esm', Then) {
+export function Riot4Compile (FlPth, Tp = 'esm', Then) {
   const CchKy = `${FlPth}-${Tp}`;
 
   if (Cch.Has(CchKy)) { return Then(1, Cch.Get(CchKy)); }

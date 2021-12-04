@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export const Cch = {
+export const Cache = {
   Cchs: { Fls: {}, Dt: {} }, // caches, files, data.
   IsRolling: false,
   /*
@@ -99,4 +99,4 @@ export const Cch = {
   }
 };
 
-export default Cch;
+export default Cache;
