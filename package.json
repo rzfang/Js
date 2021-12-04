@@ -32,13 +32,11 @@
   "devDependencies": {
     "eslint": "^8.3.0",
     "eslint-plugin-json": "^3.1.0",
-    "husky": "^7.0.4"
+    "pre-commit": "^1.2.2"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint"
-    }
-  },
+  "pre-commit": [
+    "lint"
+  ],
   "eslintConfig": {
     "env": {
       "browser": true,
