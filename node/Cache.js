@@ -1,6 +1,6 @@
-const fs = require('fs');
+import fs from 'fs';
 
-module.exports = {
+export const Cch = {
   Cchs: { Fls: {}, Dt: {} }, // caches, files, data.
   IsRolling: false,
   /*
@@ -98,3 +98,5 @@ module.exports = {
     setInterval(this.Recycle.bind(this), MlScnd);
   }
 };
+
+export default Cch;

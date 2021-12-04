@@ -1,10 +1,10 @@
-const async = require('async'),
-      sass = require('node-sass'),
-      path = require('path'),
-      { compile, registerPreprocessor } = require('@riotjs/compiler');
+import async from 'async';
+import sass from 'node-sass';
+import path from 'path';
+import { compile, registerPreprocessor } from '@riotjs/compiler';
 
-const Cch = require('./Cache'),
-      Log = require('../Log');
+import Cch from './Cache.js';
+import Log from '../Log.js';
 
 registerPreprocessor(
   'css',
@@ -179,4 +179,4 @@ function Riot4Compile (FlPth, Tp = 'esm', Then) {
     });
 }
 
-module.exports = Riot4Compile;
+export default Riot4Compile;

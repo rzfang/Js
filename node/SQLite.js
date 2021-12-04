@@ -1,6 +1,6 @@
-const sqlite3 = require('sqlite3'); //.verbose();
+import sqlite3 from 'sqlite3'; //.verbose();
 
-module.exports = class SQLite {
+export class SQLite {
   /*
     @ path. */
   constructor (Pth) {
@@ -175,4 +175,6 @@ module.exports = class SQLite {
         });
     });
   }
-};
+}
+
+export default SQLite;
