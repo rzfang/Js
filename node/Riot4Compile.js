@@ -1,6 +1,7 @@
 import async from 'async';
-import sass from 'node-sass';
+// import fs from 'fs';
 import path from 'path';
+import sass from 'node-sass';
 import { compile, registerPreprocessor } from '@riotjs/compiler';
 
 import Cch from './Cache.js';
@@ -53,6 +54,9 @@ function SourceCodeSplit (SrcCd) {
 }
 
 function Riot4ModulesCompile (FlPth, Then) {
+
+  Log(FlPth);
+
   Cch.FileLoad(
     FlPth,
     (ErrCd, SrcCd, Dt) => { // error code, source code, cached date.
@@ -176,6 +180,12 @@ export function Riot4Compile (FlPth, Tp = 'esm', Then) {
 
       Then(0, RsltCd);
       Cch.Set(CchKy, RsltCd, 60 * 60 * 24);
+
+      // === this is for debug to save the compiled source code to file. ===
+
+      // const FlNm = FlPth.substr(FlPth.lastIndexOf('/'));
+
+      // fs.writeFileSync(`./TMP/${FlNm}`, RsltCd);
     });
 }
 

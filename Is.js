@@ -1,5 +1,3 @@
-/*global jQuery */
-
 export const Is = {
   Boolean: function (Obj) { return (typeof Obj === 'boolean'); },
   Number: function (Obj) { return (typeof Obj === 'number'); },

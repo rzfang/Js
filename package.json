@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "lint": "eslint --ext .js,.json ./**/*.js",
+    "lint": "eslint --ext .js,.json ./*.js ./node/*",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,8 +25,14 @@
   "homepage": "https://github.com/rzfang/Js#readme",
   "dependencies": {
     "@riotjs/compiler": "^6.0.4",
+    "@riotjs/hydrate": "^6.0.0",
+    "@riotjs/ssr": "^7.0.0",
     "async": "^3.2.2",
+    "busboy": "^0.3.1",
+    "express": "^4.17.1",
+    "helmet": "^4.0.0",
     "node-sass": "^6.0.1",
+    "require-from-string": "^2.0.2",
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {
@@ -46,7 +52,7 @@
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-      "ecmaVersion": 9,
+      "ecmaVersion": 11,
       "sourceType": "module"
     },
     "plugins": [
