@@ -51,7 +51,7 @@ const App = express();
   @ callback function. */
 function HtmlRender (BdFl, Then) {
   Cch.FileLoad(
-    path.resolve(__dirname, BdFl),
+    BdFl,
     (Err, FlStr) => { // error, file string.
       if (Err < 0) {
         Then('FileLoad', '<!-- can not load this component. -->');
@@ -113,7 +113,7 @@ function Riot4Render (Rqst, Bd, Then) {
     { base: Bs, ext: Ext, name: Nm } = path.parse(Cmpnt); // path info.
 
   Riot4Compile(
-    './SRC/' + Bd.component,
+    Bd.component,
     'node',
     (ErrCd, Cd) => {
       if (ErrCd < 0) {
