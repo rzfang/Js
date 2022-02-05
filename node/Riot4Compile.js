@@ -54,9 +54,6 @@ function SourceCodeSplit (SrcCd) {
 }
 
 function Riot4ModulesCompile (FlPth, Then) {
-
-  Log(FlPth);
-
   Cch.FileLoad(
     FlPth,
     (ErrCd, SrcCd, Dt) => { // error code, source code, cached date.
