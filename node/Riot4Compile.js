@@ -1,5 +1,5 @@
 import async from 'async';
-// import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 import sass from 'node-sass';
 import { compile, registerPreprocessor } from '@riotjs/compiler';
@@ -10,7 +10,7 @@ import Log from '../Log.js';
 registerPreprocessor(
   'css',
   'scss',
-  (Cd, { Optns }) => {
+  Cd => {
     // const { file } = options;
 
     const Css = sass.renderSync({ data: Cd }).css.toString()
@@ -33,7 +33,7 @@ function SourceCodeSplit (SrcCd) {
 
     if (!TgInfo || !TgInfo[1]) { break; }
 
-    let [ TgNm, ...Optns ] = TgInfo[1].split(' '); // tag name, options.
+    let [ TgNm ] = TgInfo[1].split(' '); // tag name, options.
 
     // ==== handle partial code ====
 
@@ -56,7 +56,7 @@ function SourceCodeSplit (SrcCd) {
 function Riot4ModulesCompile (FlPth, Then) {
   Cch.FileLoad(
     FlPth,
-    (ErrCd, SrcCd, Dt) => { // error code, source code, cached date.
+    (ErrCd, SrcCd) => { // error code, source code, cached date.
       if (ErrCd < 0) {
         Log('cache file load failed: ' + ErrCd + ' ' + FlPth, 'error');
 
@@ -84,7 +84,7 @@ function Riot4ModulesCompile (FlPth, Then) {
 
           // non riot import handling.
           if (Pth.substr(-5) !== '.riot') {
-            return Done => Done(null, { [Nm]: { Nm, Pth }});
+            return Done => Done(null, { [Pth]: `const ${Nm} = require('${Pth}');` });
           }
 
           return Done => {
@@ -120,7 +120,7 @@ function Riot4ModulesCompile (FlPth, Then) {
           SourceCodeSplit(SrcCd).map(({ Nm, Cd }) => {
             if (RsltMdls[Nm]) { return ; }
 
-            // console.log('---- 001 ----');
+            // console.log('--- 001 ---');
             // console.log(Nm);
             // console.log(Cd);
 
@@ -184,6 +184,99 @@ export function Riot4Compile (FlPth, Tp = 'esm', Then) {
 
       // fs.writeFileSync(`./TMP/${FlNm}`, RsltCd);
     });
+}
+
+/* compile a Riot.js component source code.
+  @ file path.
+  @ extension. optional, can be 'js', 'ms'. default 'js'.
+  @ the flag to merge imports. optional, default false.
+  < compiled component Js code object { ExprtDflt, Imprts, JsCd }.
+    @ export default.
+    @ imports.
+    @ modules Js code. */
+export function Riot4Compile2 (FlPth, Extnsn = 'js', MrgImprts = false) {
+  const MdlsSrcCds = SourceCodeSplit(fs.readFileSync(FlPth, 'utf8')), // modules source codes.
+        NwExtnsn = `.riot.${Extnsn}`; // new extension.
+  let RsltImprts = [], // result import modules.
+      RsltMdlCds = []; // result modules code.
+
+  MdlsSrcCds.forEach(({ Nm, Cd }) => {
+    const RE = /import .+\n+/g; // regular expression.
+    let RsltCd = compile(Cd).code.replace('export default', `const ${Nm} =`); //result code; take off 'export default'.
+    let Imprts = RsltCd.match(RE) || [];
+
+    Imprts = Imprts.map(Imprt => Imprt.replace('.riot', NwExtnsn).replace(/\n+/, ''));
+    RsltCd = RsltCd.replace(RE, '');
+
+    Imprts.forEach(Imprt => {
+      if (!RsltImprts.includes(Imprt)) { RsltImprts.push(Imprt); }
+    });
+
+    RsltMdlCds.push({ Nm, Cd: RsltCd });
+  });
+
+  if (MrgImprts) {
+    const ExtrMdlCds = [], // extra module codes.
+          RsltMdlNms = RsltMdlCds.map(({ Nm }) => Nm); // result module names.
+
+    [ ...RsltImprts ].forEach(Imprt => { // clone then work.
+      if (Imprt.indexOf(NwExtnsn) < 0) { return; }
+
+      RsltImprts.splice(RsltImprts.indexOf(Imprt), 1); // remove current 'import'.
+
+      let [ , CmpntFlPth ] = Imprt.match(/from '(.+)\.mjs';$/);
+
+      CmpntFlPth = path.resolve(path.dirname(FlPth), CmpntFlPth);
+
+      const { Imprts, MdlsCd } = Riot4Compile2(CmpntFlPth, Extnsn, MrgImprts);
+
+      Imprts.forEach(Imprt => {
+        if (!RsltImprts.includes(Imprt)) { RsltImprts.push(Imprt); }
+      });
+
+      const MdlNms = [ ...RsltMdlNms, ...ExtrMdlCds.map(({ Nm }) => Nm) ];
+
+      MdlsCd.forEach(MdlCd => {
+        if (MdlNms.includes(MdlCd.Nm)) { return; }
+
+        ExtrMdlCds.push(MdlCd);
+      });
+    });
+
+    RsltMdlCds = [ ...ExtrMdlCds, ...RsltMdlCds ];
+  }
+
+  return {
+    ExprtDflt: 'export default ' + MdlsSrcCds[MdlsSrcCds.length - 1].Nm + ';', // final module as exported default module.
+    Imprts: RsltImprts,                                                // all 'import ...'.
+    MdlsCd: RsltMdlCds                                                        // all modulea code.
+  };
+}
+
+/*
+  @ folder path.
+  @ RegExp object to filter files. */
+export function FilesFind (FldrPth, RE) {
+  if (FldrPth.substr(-12) === 'node_modules') {
+    return [];
+  }
+
+  let RsltFlPths = [];
+
+  fs.readdirSync(FldrPth).forEach(FlNm => {
+    const FlPth = path.resolve(FldrPth, FlNm); // file path.
+    const Stt = fs.statSync(FlPth);
+
+    if (Stt.isDirectory()) { // handle a afolder.
+      RsltFlPths = [ ...RsltFlPths, ...FilesFind(FlPth, RE) ];
+    }
+
+    if (RE.test(FlNm)) {
+      RsltFlPths.push(FlPth);
+    }
+  });
+
+  return RsltFlPths;
 }
 
 export default Riot4Compile;

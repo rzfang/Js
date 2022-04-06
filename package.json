@@ -1,6 +1,6 @@
 {
   "name": "js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -32,7 +32,7 @@
     "express": "^4.17.1",
     "helmet": "^4.0.0",
     "node-sass": "^6.0.1",
-    "require-from-string": "^2.0.2",
+    "riot": "^6.0.0",
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {

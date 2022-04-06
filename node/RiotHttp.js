@@ -1,22 +1,18 @@
-import async from 'async';
 import busboy from 'busboy';
+import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
 import path from 'path';
-import requireFromString from 'require-from-string';
 import riot from 'riot';
 import ssr from '@riotjs/ssr';
-import { fileURLToPath } from 'url';
 
 import Cache from './Cache.js';
 import Is from '../Is.js';
 import Log from '../Log.js';
-import Riot4Compile from './Riot4Compile.js';
+import Riot4Compile, { FilesFind, Riot4Compile2 } from './Riot4Compile.js';
 import RiotMixin from '../RiotMixin.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const Cch = Cache;
 
 const MM_TP = {
@@ -26,6 +22,7 @@ const MM_TP = {
   '.ico':  'image/x-icon',
   '.jpg':  'image/jpeg',
   '.js':   'application/javascript',
+  '.mjs':  'application/javascript',
   '.png':  'image/png',
   '.riot': 'application/javascript',
   '.svg':  'image/svg+xml',
@@ -37,8 +34,7 @@ const MM_TP = {
 let ErrPg, // error page.
     Pg, // page.
     Pt = 9004, // port.
-    Riot3Url = 'https://cdn.jsdelivr.net/npm/riot@3.13/riot+compiler.min.js',
-    Riot4Url = 'https://unpkg.com/riot@4/riot+compiler.min.js',
+    Riot4Url = 'https://unpkg.com/riot@6/riot.min.js',
     Rt = [], // route.
     SvcCs = {}, // service case.
     SvcPthPtrm = null, // service path patterm.
@@ -49,13 +45,15 @@ const App = express();
 /*
   @ body file.
   @ callback function. */
-function HtmlRender (BdFl, Then) {
+function HtmlRender (Bd, Then) {
+  const FlPth = path.resolve(process.env.PWD, Bd.component);
+
   Cch.FileLoad(
-    BdFl,
+    FlPth,
     (Err, FlStr) => { // error, file string.
       if (Err < 0) {
         Then('FileLoad', '<!-- can not load this component. -->');
-        Log(`FileLoad(${Err}) - ${BdFl} - load file failed.`, 'error');
+        Log(`FileLoad(${Err}) - ${FlPth} - load file failed.`, 'error');
 
         return;
       }
@@ -64,101 +62,32 @@ function HtmlRender (BdFl, Then) {
     });
 }
 
-/*
-  @ body info object.
-  @ async callback function. (error, result)
-    @ error.
-    @ result object. ()
-      @ riot version.
-      @ head string.
-      @ body string.
-      @ script string. */
-function Riot3Render (Rqst, Bd, Then) {
-  const
-    { component: Cmpnt, initialize: Initialize = null } = Bd,
-    { base: Bs, ext: Ext, name: Nm } = path.parse(Cmpnt); // path info.
+function Riot4Render (Rqst, Bd, Then) {
+  const { component: Cmpnt, componentJs: CmpntJs, module: Mdl } = Bd;
+  const JsNm = path.basename(CmpntJs),
+        { name: Nm } = path.parse(Cmpnt); // path info.
+  const MdlNm = Nm.replace(/-\w/g, Str => Str.substr(1).toUpperCase()); // module name.
 
   let Rslt = { // result.
-    RiotVrsn: 3, // riot version.
-    HdStr: `<script type='riot/tag' src='${Bs}'></script>\n`, // head string.
-    BdStr: `<${Nm}><!-- this will be replaced by riot.mount. --></${Nm}>\n`, // body string.
-    ScrptStr: `<script>\nriot.mixin('Z.RM', Z.RM);\nriot.compile(() => { riot.mount('${Nm}'); });\n</script>\n` // script stream.
+    HdStr: '', // head string.
+    BdStr: '', // body string.
+    ScrptStr: '' // script stream.
   };
 
-  if (!Initialize || !Is.Function(Initialize)) { return Then(null, Rslt); }
-
-  Initialize(
+  Bd.initialize(
     Rqst,
     {},
     (Cd, Dt) => {
-      if (Cd < 0) {
-        Rslt.HdStr = '';
-        Rslt.BdStr = `<!-- can not render '${Nm}' component. -->\n`;
-        Rslt.ScrptStr = '';
+      if (Cd < 0) { return Then(null, `<!-- can not render '${Nm}' component. -->`); }
 
-        return Then(null, Rslt);
-      }
+      const { html: HTML, css: CSS } = ssr.fragments(Nm, Mdl, Dt);
 
-      const Jsn = JSON.stringify(Dt);
+      Rslt.BdStr = HTML + '\n';
+      Rslt.ScrptStr = `<script type='module'>\nimport ${MdlNm} from '/${JsNm}';\nconst ${MdlNm}Shell = hydrate(${MdlNm});\n${MdlNm}Shell(document.querySelector('${Nm}'));\n</script>\n`;
 
-      Rslt.ScrptStr = `<script>\nriot.mixin('Z.RM', Z.RM);\nriot.compile(() => { riot.mount('${Nm}', ${Jsn}); });\n</script>\n`;
+      if (CSS) { Rslt.HdStr += `<style>${CSS}</style>\n`; }
 
       Then(null, Rslt);
-    });
-}
-
-function Riot4Render (Rqst, Bd, Then) {
-  const
-    { component: Cmpnt, initialize: Initialize = null } = Bd,
-    { base: Bs, ext: Ext, name: Nm } = path.parse(Cmpnt); // path info.
-
-  Riot4Compile(
-    Bd.component,
-    'node',
-    (ErrCd, Cd) => {
-      if (ErrCd < 0) {
-        Log('riot 4 compile+ failed: ' + ErrCd, 'error');
-
-        return Then(null, '');
-      }
-
-      const Cmpnts = requireFromString(Cd, __dirname + '/' + Bd.component),
-            Cmpnt = Cmpnts.default,
-            MdlNm = Nm.replace(/-\w/g, Str => Str.substr(1).toUpperCase()); // module name.
-
-      let Rslt = { // result.
-        RiotVrsn: 4, // riot version.
-        HdStr: '', // head string.
-        BdStr: '', // body string.
-        ScrptStr: '' // script stream.
-      };
-
-      if (!Bd.initialize || !Is.Function(Bd.initialize)) {
-        const { html: HTML, css: CSS } = ssr.fragments(Nm, Cmpnt, {});
-
-        Rslt.BdStr = HTML + '\n';
-        Rslt.ScrptStr = `<script type='module'>\nimport ${MdlNm} from '/${Bs}';\nconst ${MdlNm}Shell = hydrate(${MdlNm});\n${MdlNm}Shell(document.querySelector('${Nm}'));\n</script>\n`;
-
-        if (CSS) { Rslt.HdStr += `<style>${CSS}</style>\n`; }
-
-        return Then(null, Rslt);
-      }
-
-      Bd.initialize(
-        Rqst,
-        {},
-        (Cd, Dt) => {
-          if (Cd < 0) { return Then(null, `<!-- can not render '${Nm}' component. -->`); }
-
-          const { html: HTML, css: CSS } = ssr.fragments(Nm, Cmpnt, Dt);
-
-          Rslt.BdStr = HTML + '\n';
-          Rslt.ScrptStr = `<script type='module'>\nimport ${MdlNm} from '/${Bs}';\nconst ${MdlNm}Shell = hydrate(${MdlNm});\n${MdlNm}Shell(document.querySelector('${Nm}'));\n</script>\n`;
-
-          if (CSS) { Rslt.HdStr += `<style>${CSS}</style>\n`; }
-
-          Then(null, Rslt);
-        });
     });
 }
 
@@ -201,7 +130,7 @@ function HeaderGet (RMI, PgCnfg) {
 function PageRespond (Rqst, Rspns, Pth, PgCnfg) {
   const { body: Bd } = PgCnfg;
 
-  if (!Bd || !Is.Array(Bd)) {
+  if (!Bd) {
     Log(Pth + '\ncan not handle the body for this path.', 'warn');
     Rspns.status(500);
 
@@ -217,118 +146,74 @@ function PageRespond (Rqst, Rspns, Pth, PgCnfg) {
 
   riot.install(Cmpnt => { Rqst.RMI.Bind(Cmpnt); }); // bind RiotMixin functions to each component on server side rendering.
 
-  async.map(
-    Bd,
-    (Bd, Then) => {
-      const Tp = typeof Bd;
+  function Then (Cd, Rslt) {
+    const { css: Css, js: Js } = PgCnfg;
+    let BdStrs = '',
+        HdStrs = HeaderGet(Rqst.RMI, PgCnfg),
+        ScrptStrs = Bd.type === 'riot' ? Rqst.RMI.StorePrint() : '';
 
-      if (Tp === 'string') {
-        const { ext: Ext } = path.parse(Bd); // path info.
+    if (!Is.Array(Css)) { Log(Pth + '\npage config css is not an array.', 'warn'); }
+    else {
+      for (let i = 0; i < Css.length; i++) {
+        const CssPth = Css[i];
 
-        switch (Ext) {
-          case '.tag':
-            return Riot3Render(Rqst, { component: Bd }, Then);
-
-          case '.riot':
-            return Riot4Render(Rqst, { component: Bd }, Then);
-
-          case '.html':
-          default:
-            return HtmlRender(Bd, Then);
-        }
-      }
-
-      if (Tp === 'object' && Bd.component && Is.String(Bd.component)) {
-        const { ext: Ext } = path.parse(Bd.component); // path info.
-
-        if (Ext === '.tag') {
-          return Riot3Render(Rqst, Bd, Then);
-        }
-        else if (Ext === '.riot') {
-          return Riot4Render(Rqst, Bd, Then);
-        }
-      }
-
-      Log('do not know how to deal this component.', 'error');
-      Then(null, '<!-- can not render this component. -->');
-    },
-    (Err, Rslts) => {
-      const { css: Css, js: Js } = PgCnfg;
-      let BdStrs = '',
-          HdStrs = HeaderGet(Rqst.RMI, PgCnfg),
-          ScrptStrs = Rqst.RMI.StorePrint();
-
-      if (!Is.Array(Css)) { Log(Pth + '\npage config css is not an array.', 'warn'); }
-      else {
-        for (let i = 0; i < Css.length; i++) {
-          const CssPth = Css[i];
-
-          if (!Is.String(CssPth)) {
-            Log('CSS path in page config is not a string.', 'warn');
-
-            continue;
-          }
-
-          HdStrs += `<link rel='stylesheet' type='text/css' href='${CssPth}'/>\n`;
-        }
-      }
-
-      if (!Is.Array(Js)) { Log(Pth + '\npage config js is not an array.', 'warn'); }
-      else {
-        for (let i = 0; i < Js.length; i++) {
-          const JsPth = Js[i];
-
-          if (!Is.String(JsPth)) {
-            Log('Js path in page config is not a string.', 'warn');
-
-            continue;
-          }
-
-          const { ext: Ext } = path.parse(JsPth);
-
-          if (Ext === '.tag') { HdStrs += `<script type='riot/tag' src='${JsPth}'></script>\n`; }
-          else if (Ext === '.riot') { HdStrs += `<script type='riot' src='${JsPth}'></script>\n`; }
-          else { HdStrs += `<script src='${JsPth}'></script>\n`; }
-        }
-      }
-
-      let FnlRiotVrsn = 3;
-
-      for (let i = 0; i < Rslts.length; i++) {
-        const Rslt = Rslts[i];
-
-        if (Is.String(Rslt)) {
-          BdStrs += Rslt;
+        if (!Is.String(CssPth)) {
+          Log('CSS path in page config is not a string.', 'warn');
 
           continue;
         }
 
-        const { RiotVrsn, HdStr, BdStr, ScrptStr } = Rslt;
-
-        FnlRiotVrsn = Math.max(FnlRiotVrsn, RiotVrsn);
-        HdStrs += HdStr;
-        BdStrs += BdStr;
-        ScrptStrs += ScrptStr;
+        HdStrs += `<link rel='stylesheet' type='text/css' href='${CssPth}'/>\n`;
       }
+    }
 
-      if (FnlRiotVrsn === 3) {
-        HdStrs = `<script src='${Riot3Url}'></script>\n${HdStrs}`;
-      }
-      else {
-        HdStrs += `<script src='${Riot4Url}'></script>\n` +
-                  '<script type=\'module\' src=\'/hydrate.js\'></script>\n';
-      }
+    if (!Is.Array(Js)) { Log(Pth + '\npage config js is not an array.', 'warn'); }
+    else {
+      for (let i = 0; i < Js.length; i++) {
+        const JsPth = Js[i];
 
-      Rspns.writeHead(Rspns.statusCode, { 'Content-Type': 'text/html' });
-      Rspns.write(
-        "<!DOCTYPE HTML>\n<html>\n<head>\n<meta charset='utf-8'/>\n" +
-        HdStrs +
-        '</head>\n<body>\n' +
-        BdStrs +
-        ScrptStrs +
-        '</body>\n</html>\n');
-      Rspns.end();
-    });
+        if (!Is.String(JsPth)) {
+          Log('Js path in page config is not a string.', 'warn');
+
+          continue;
+        }
+
+        if (JsPth.substr(-5) === '.riot') { HdStrs += `<script type='riot' src='${JsPth}'></script>\n`; }
+        else { HdStrs += `<script src='${JsPth}'></script>\n`; }
+      }
+    }
+
+    if (Is.String(Rslt)) {
+      BdStrs += Rslt;
+    }
+    else {
+      const { HdStr, BdStr, ScrptStr } = Rslt;
+
+      HdStrs += HdStr +
+                `<script src='${Riot4Url}'></script>\n` +
+                '<script type=\'module\' src=\'/hydrate.js\'></script>\n';
+      BdStrs += BdStr;
+      ScrptStrs += ScrptStr;
+    }
+
+    Rspns.writeHead(Rspns.statusCode, { 'Content-Type': 'text/html' });
+    Rspns.write(
+      "<!DOCTYPE HTML>\n<html>\n<head>\n<meta charset='utf-8'/>\n" +
+      HdStrs +
+      '</head>\n<body>\n' +
+      BdStrs +
+      ScrptStrs +
+      '</body>\n</html>\n');
+    Rspns.end();
+  }
+
+  switch (Bd.type) {
+    case 'html':
+      return HtmlRender(Bd, Then);
+
+    case 'riot':
+      return Riot4Render(Rqst, Bd, Then);
+  }
 }
 
 /*
@@ -498,7 +383,7 @@ function BodyParse (Rqst, Rspns, Next) {
 
   BsBy.on(
     'file',
-    (Ky, FlStrm, FlNm, Encd, Mmtp) => { // key, file stream, file name, encoding, mine type.
+    (Ky, FlStrm, FlNm) => { // key, file stream, file name, encoding, mine type.
       const DstFlPth = UpldFlPth + '/' + FlNm; // destination file path.
 
       FlStrm.pipe(fs.createWriteStream(DstFlPth));
@@ -507,7 +392,7 @@ function BodyParse (Rqst, Rspns, Next) {
 
   BsBy.on(
     'field',
-    (Ky, Vl, FldnmTrnct, VlTrnct, VlTruncated, Encd, Mmtp) => { // key, value, fieldnameTruncated, fieldnameTruncated, encoding, mimetype.
+    (Ky, Vl) => { // key, value, fieldnameTruncated, fieldnameTruncated, encoding, mimetype.
       if (Ky.substr(-2) !== '[]') {
         Flds[Ky] = Vl;
 
@@ -532,7 +417,57 @@ function BodyParse (Rqst, Rspns, Next) {
   Rqst.pipe(BsBy);
 }
 
+/*
+  @ config object.
+  @ extension. optional, can be js|ms. */
+function Build (Cfg, Ext = 'js') {
+  Log('build...');
+
+  Ext = (Ext === 'mjs') ? 'mjs' : 'js';
+
+  const Pgs = Object
+    .values({ ...Cfg.page, ...Cfg.errorPage })
+    .filter(Pg => Pg.body.type === 'riot');
+
+  Pgs.map(Pg => {
+    const FlPth = path.resolve(process.env.PWD, Pg.body.component)
+    const { ExprtDflt, Imprts, MdlsCd } = Riot4Compile2(FlPth, Ext, true),
+          FlInfo = path.parse(FlPth); // file information.
+    const Cd = Imprts.join('\n') + '\n\n' + MdlsCd.map(({ Cd }) => Cd).join('\n\n') + ExprtDflt + '\n',
+          RE = `${FlInfo.name}\\.riot\\..+\\.m?js$`;
+    const Hsh = crypto.createHash('shake256', { outputLength: 5 }).update(Cd).digest('hex'); // hash.
+    const JsFlPth = FlPth.replace('.riot', `.riot.${Hsh}.${Ext}`);
+
+    if (!fs.existsSync(JsFlPth)) {
+      const OldJsFls = FilesFind(FlInfo.dir, new RegExp(RE));
+
+      if (OldJsFls.length > 0) {
+        OldJsFls.forEach(OldJsFl => { fs.unlinkSync(OldJsFl); }); // remove old Js files.
+      }
+
+      fs.writeFileSync(JsFlPth, Cd);
+    }
+
+    const { base: JsFlNm, dir: JsFldrPth } = path.parse(JsFlPth);
+
+    Pg.body.componentJs = path.dirname(Pg.body.component) + '/' + JsFlNm;
+
+    Cfg.route.push({
+      path: new RegExp(JsFlNm + '$'),
+      type: 'resource',
+      location: JsFldrPth,
+      nameOnly: true
+    });
+
+    return JsFlPth;
+  });
+
+  return this;
+}
+
 function Initialize (Cfg) {
+  Log('initialize...');
+
   App.use(helmet({ contentSecurityPolicy: false })); // header handle for security.
 
   // === set up all config variables. ===
@@ -541,16 +476,30 @@ function Initialize (Cfg) {
   Pg = Cfg.page;
   Rt = [
     // append necessary files.
-    { path: /hydrate\.js$/, type: 'resource', location: './node_modules/rzjs/node_modules/@riotjs/hydrate' },
-    { path: /riot\.min\.js$/, type: 'resource', location: './node_modules/rzjs/node_modules/riot' },
-    { path: /RiotMixin.js$/, type: 'resource', location: './node_modules/rzjs' },
+    {
+      path: /hydrate\.js$/,
+      type: 'resource',
+      location: './node_modules/rzjs/node_modules/@riotjs/hydrate',
+      nameOnly: true
+    },
+    {
+      path: /riot\.min\.js$/,
+      type: 'resource',
+      location: './node_modules/rzjs/node_modules/riot',
+      nameOnly: true
+    },
+    {
+      path: /RiotMixin.js$/,
+      type: 'resource',
+      location: './node_modules/rzjs',
+      nameOnly: true
+    },
     ...Cfg.route ];
   SvcCs = Cfg.service.case || {};
   SvcPthPtrm = Cfg.service.pathPatterm || null;
   UpldFlPth = Cfg.uploadFilePath;
 
   Cfg.port && (Pt = Cfg.port);
-  Cfg.riot3 && (Riot3Url = Cfg.riot3);
   Cfg.riot4 && (Riot4Url = Cfg.riot4);
 
   // ==== resource route. ====
@@ -612,31 +561,42 @@ function Initialize (Cfg) {
     }
   }
 
-  // ==== page route. ====
+  // ==== import riot components then set up page route. ====
 
-  const Pgs = Object.entries(Pg);
+  Object.entries(Pg).forEach(([ Pth, PgCnfg ]) => {
+    const { body: Bd } = PgCnfg;
 
-  for (let i = 0; i < Pgs.length; i++) {
-    const [ Pth, PgCnfg ] = Pgs[i];
+    if (!Bd.initialize) {
+      Bd.initialize = (Rqst, Dt, Clbck) => Clbck(0, null);
+    }
 
-    App.get(Pth, (Rqst, Rspns) => PageRespond(Rqst, Rspns, Pth, PgCnfg));
-  }
+    if (Bd.type === 'html') {
+      return App.get(Pth, (Rqst, Rspns) => PageRespond(Rqst, Rspns, Pth, PgCnfg));
+    }
+
+    import(path.resolve(process.env.PWD, Bd.componentJs)).then(Mdl => {
+      Bd.module = Mdl.default;
+
+      App.get(Pth, (Rqst, Rspns) => PageRespond(Rqst, Rspns, Pth, PgCnfg));
+    });
+  });
 
   // ==== 404 route. ====
 
-  App.use((Rqst, Rspns) => {
-    const Pg404 = ErrPg['404'] || null;
+  // App.use((Rqst, Rspns) => {
+  //   const Pg404 = ErrPg['404'] || null;
 
-    Rspns.status(404);
+  //   Rspns.status(404);
 
-    if (Pg404) { PageRespond(Rqst, Rspns, Rqst.url, Pg404); }
-    else { Rspns.send('Error 404.'); }
-  });
+  //   if (Pg404) { PageRespond(Rqst, Rspns, Rqst.url, Pg404); }
+  //   else { Rspns.send('Error 404.'); }
+  // });
 
   return this;
 }
 
 function Run () {
+  Log('run...');
   App.listen(Pt, () => { Log('server has started - 127.0.0.1:' + Pt.toString()); });
   Cch.RecycleRoll(10); // 10 minutes a round.
 
@@ -644,6 +604,7 @@ function Run () {
 }
 
 export const RiotHttp = {
+  Build,
   Initialize,
   Run
 };

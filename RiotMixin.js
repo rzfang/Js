@@ -28,8 +28,8 @@ function AJAX (Info) {
         URL: '',
         Data: {},
         Files: {},
-        Err: Sts => {}, // Error callback function. optional. 'Sts' = HTTP Status code.
-        OK: (RpsTxt, Sts) => {}}, // OK callback function. optional. 'RpsTxt' = Response Text, 'Sts' = HTTP Status code.
+        Err: () => {}, // Error callback function. optional. 'Sts' = HTTP Status code.
+        OK: () => {}}, // OK callback function. optional. 'RpsTxt' = Response Text, 'Sts' = HTTP Status code.
       FmDt, // 'FmDt' = Form Data.
       XHR,
       Kys; // 'Kys' = Keys.
@@ -214,7 +214,14 @@ export class RiotMixin {
       this.Srvc.Sto.PAGE = ''; // clean server only store - PAGE.
     }
 
-    if (Stos.length === 0 || (Stos === 1 && Stos[0][1] === 'PAGE')) { return ''; } // no stores, or only PAGE store.
+    // no stores, or only PAGE store.
+    if (Stos.length === 0 || (Stos === 1 && Stos[0][1] === 'PAGE')) {
+      return '<script type=\'module\'>' +
+        'import { RiotMixin } from \'/RiotMixin.js\';\n' +
+        'window.RMI = new RiotMixin();\n' +
+        'riot.install(Cmpnt => { window.RMI.Bind(Cmpnt); });\n' +
+        '</script>\n';
+    }
 
     return '<script id=\'riot-store\' type=\'application/json\'>' + JSON.stringify(this.Srvc.Sto) + '</script>\n' +
       '<script type=\'module\'>' +
@@ -265,7 +272,7 @@ export class RiotMixin {
       URL: Url,
       Mthd,
       Data: Prms,
-      Err: Sts => {
+      Err: () => {
         console.log('---- AJAX query fail ----\nUrl: ' + Url + '\nparams:'); // eslint-disable-line no-console
         console.log(Prms); // eslint-disable-line no-console
         console.log('----\n'); // eslint-disable-line no-console
