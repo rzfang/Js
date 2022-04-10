@@ -1,6 +1,6 @@
 {
   "name": "js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -29,14 +29,14 @@
     "@riotjs/ssr": "^7.0.0",
     "async": "^3.2.2",
     "busboy": "^0.3.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "helmet": "^4.0.0",
     "node-sass": "^6.0.1",
     "riot": "^6.0.0",
     "sqlite3": "^5.0.2"
   },
   "devDependencies": {
-    "eslint": "^8.3.0",
+    "eslint": "^8.12.0",
     "eslint-plugin-json": "^3.1.0",
     "pre-commit": "^1.2.2"
   },

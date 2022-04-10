@@ -428,9 +428,18 @@ function Build (Cfg, Ext = 'js') {
   const Pgs = Object
     .values({ ...Cfg.page, ...Cfg.errorPage })
     .filter(Pg => Pg.body.type === 'riot');
+  const Cmpnts = Pgs
+    .map(Pg => Pg.body.component)
+    .reduce(
+      (Cmpnts, Cmpnt) => {
+        if (!Cmpnts.includes(Cmpnt)) { Cmpnts.push(Cmpnt); }
 
-  Pgs.map(Pg => {
-    const FlPth = path.resolve(process.env.PWD, Pg.body.component)
+        return Cmpnts;
+      },
+      []);
+
+  Cmpnts.map(Cmpnt => {
+    const FlPth = path.resolve(process.env.PWD, Cmpnt)
     const { ExprtDflt, Imprts, MdlsCd } = Riot4Compile2(FlPth, Ext, true),
           FlInfo = path.parse(FlPth); // file information.
     const Cd = Imprts.join('\n') + '\n\n' + MdlsCd.map(({ Cd }) => Cd).join('\n\n') + ExprtDflt + '\n',
@@ -446,16 +455,23 @@ function Build (Cfg, Ext = 'js') {
       }
 
       fs.writeFileSync(JsFlPth, Cd);
+      Log(`${JsFlPth} compiled and saved.`);
     }
 
-    const { base: JsFlNm, dir: JsFldrPth } = path.parse(JsFlPth);
+    const JsFlInfo = path.parse(JsFlPth);
 
-    Pg.body.componentJs = path.dirname(Pg.body.component) + '/' + JsFlNm;
+    Pgs.forEach(Pg => {
+      const PgFlInfo = path.parse(Pg.body.component);
+
+      if (PgFlInfo.base !== FlInfo.base) { return; }
+
+      Pg.body.componentJs = PgFlInfo.dir + '/' + JsFlInfo.base;
+    });
 
     Cfg.route.push({
-      path: new RegExp(JsFlNm + '$'),
+      path: new RegExp(JsFlInfo.base + '$'),
       type: 'resource',
-      location: JsFldrPth,
+      location: JsFlInfo.dir,
       nameOnly: true
     });
 
