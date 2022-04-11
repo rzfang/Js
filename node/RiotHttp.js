@@ -10,7 +10,7 @@ import ssr from '@riotjs/ssr';
 import Cache from './Cache.js';
 import Is from '../Is.js';
 import Log from '../Log.js';
-import Riot4Compile, { FilesFind, Riot4Compile2 } from './Riot4Compile.js';
+import { FilesFind, Riot4Compile2 } from './Riot4Compile.js';
 import RiotMixin from '../RiotMixin.js';
 
 const Cch = Cache;
@@ -34,7 +34,6 @@ const MM_TP = {
 let ErrPg, // error page.
     Pg, // page.
     Pt = 9004, // port.
-    Riot4Url = 'https://unpkg.com/riot@6/riot.min.js',
     Rt = [], // route.
     SvcCs = {}, // service case.
     SvcPthPtrm = null, // service path patterm.
@@ -190,7 +189,7 @@ function PageRespond (Rqst, Rspns, Pth, PgCnfg) {
       const { HdStr, BdStr, ScrptStr } = Rslt;
 
       HdStrs += HdStr +
-                `<script src='${Riot4Url}'></script>\n` +
+                '<script src=\'/riot.min.js\'></script>\n' +
                 '<script type=\'module\' src=\'/hydrate.js\'></script>\n';
       BdStrs += BdStr;
       ScrptStrs += ScrptStr;
@@ -313,63 +312,6 @@ function FileRespond (Rqst, Rspns, FlPth, ExprScd = 3600) {
         });
 
       RdStrm.pipe(Rspns);
-    });
-}
-
-/* Riot 4 component Js respond. this should be the end action of a request.
-  @ request object.
-  @ response object.
-  @ file path.
-  @ expired second, default 1 hour (3600 seconds). */
-function Riot4ComponentJsRespond (Rqst, Rspns, FlPth, ExprScd = 3600) {
-  const Expr = ExprScd.toString(), // expire seconds string.
-        { base: Bs, ext: Ext } = path.parse(FlPth),
-        MmTp = MM_TP[Ext] || 'text/plain';
-
-  if (Cch.Has(Bs)) {
-    const Js = Cch.Get(Bs);
-    let IfMdfSnc = Rqst.headers['if-modified-since']; // if-modified-since.
-
-    if (!IfMdfSnc || IfMdfSnc === 'Invalid Date') {
-      IfMdfSnc = (new Date()).toUTCString();
-    }
-
-    Rspns.writeHead(
-      200,
-      { 'Cache-Control': 'public, max-age=' + Expr,
-        'Content-Length': Js.length,
-        'Content-Type': MmTp,
-        'Last-Modified': IfMdfSnc });
-    Rspns.write(Js);
-    Rspns.end();
-
-    return;
-  }
-
-  Riot4Compile(
-    FlPth,
-    'esm',
-    (ErrCd, Cd) => { // error code, code string.
-      if (ErrCd < 0) {
-        Rspns.writeHead(
-          500,
-          { 'Content-Type': MmTp,
-            'Content-Length': 0 });
-        Rspns.write('');
-        Rspns.end();
-        Log('can not compile Riot4 component file. ' + ErrCd, 'error');
-
-        return;
-      }
-
-      Rspns.writeHead(
-        200,
-        { 'Cache-Control': 'public, max-age=' + Expr,
-          // 'Content-Length': Cd.length, // Cd.length is not precise if there has non ASCII characters.
-          'Content-Type': MmTp,
-          'Last-Modified': (new Date()).toUTCString() });
-      Rspns.write(Cd);
-      Rspns.end();
     });
 }
 
@@ -516,7 +458,6 @@ function Initialize (Cfg) {
   UpldFlPth = Cfg.uploadFilePath;
 
   Cfg.port && (Pt = Cfg.port);
-  Cfg.riot4 && (Riot4Url = Cfg.riot4);
 
   // ==== resource route. ====
 
@@ -539,7 +480,6 @@ function Initialize (Cfg) {
 
       switch (Tp) {
         case 'resource':
-        case 'riot4js':
         case 'static': // static file response.
           if (!Lctn) {
             Log('the resource type route case ' + Url + ' misses the location or mime type.', 'warn');
@@ -550,7 +490,7 @@ function Initialize (Cfg) {
           FlPth = decodeURI(Url.charAt(0) === '/' ? Url.substr(1) : Url);
           FlPth = path.resolve(process.env.PWD, Lctn, NmOnly ? path.basename(FlPth) : FlPth);
 
-          return Tp === 'riot4js' ? Riot4ComponentJsRespond(Rqst, Rspns, FlPth) : FileRespond(Rqst, Rspns, FlPth);
+          return FileRespond(Rqst, Rspns, FlPth);
 
         default:
           Next();

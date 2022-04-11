@@ -203,7 +203,7 @@ export class RiotMixin {
       this.Srvc.Sto = JSON.parse(StoStr);
     }
     catch (Err) {
-      console.log(Err);
+      console.log(Err); // eslint-disable-line no-console
     }
   }
 
