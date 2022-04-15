@@ -437,13 +437,13 @@ function Initialize (Cfg) {
     {
       path: /hydrate\.js$/,
       type: 'resource',
-      location: './node_modules/rzjs/node_modules/@riotjs/hydrate',
+      location: './node_modules/@riotjs/hydrate',
       nameOnly: true
     },
     {
       path: /riot\.min\.js$/,
       type: 'resource',
-      location: './node_modules/rzjs/node_modules/riot',
+      location: './node_modules/riot',
       nameOnly: true
     },
     {
