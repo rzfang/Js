@@ -216,7 +216,7 @@ export class RiotMixin {
 
     // no stores, or only PAGE store.
     if (Stos.length === 0 || (Stos === 1 && Stos[0][1] === 'PAGE')) {
-      return '<script type=\'module\'>' +
+      return '<script type=\'module\'>\n' +
         'import { RiotMixin } from \'/RiotMixin.js\';\n' +
         'window.RMI = new RiotMixin();\n' +
         'riot.install(Cmpnt => { window.RMI.Bind(Cmpnt); });\n' +
@@ -224,7 +224,7 @@ export class RiotMixin {
     }
 
     return '<script id=\'riot-store\' type=\'application/json\'>' + JSON.stringify(this.Srvc.Sto) + '</script>\n' +
-      '<script type=\'module\'>' +
+      '<script type=\'module\'>\n' +
       'import { RiotMixin } from \'/RiotMixin.js\';\n' +
       'window.RMI = new RiotMixin();\n' +
       'window.RMI.StoreInject(document.getElementById(\'riot-store\').textContent);\n' +
