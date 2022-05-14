@@ -447,7 +447,7 @@ function Initialize (Cfg) {
       nameOnly: true
     },
     {
-      path: /RiotMixin.js$/,
+      path: /RiotMixin\.js$/,
       type: 'resource',
       location: './node_modules/rzjs',
       nameOnly: true
@@ -461,17 +461,17 @@ function Initialize (Cfg) {
 
   // ==== resource route. ====
 
-  for (let i = 0; i < Rt.length; i++) {
+  Rt.forEach(OneRt => {
     const {
       location: Lctn = '',
       nameOnly: NmOnly = false,
       path: Pth,
-      type: Tp } = Rt[i];
+      type: Tp } = OneRt;
 
     if (!Pth || !Tp) {
       Log('the route case misses path or type.', 'error');
 
-      continue;
+      return;
     }
 
     App.get(Pth, (Rqst, Rspns, Next) => {
@@ -496,7 +496,7 @@ function Initialize (Cfg) {
           Next();
       }
     });
-  }
+  });
 
   // ====
 
