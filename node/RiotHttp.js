@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import path from 'path';
 import riot from 'riot';
 import ssr from '@riotjs/ssr';
+import url from 'url';
 
 import Cache from './Cache.js';
 import Is from '../Is.js';
@@ -36,7 +37,6 @@ let ErrPg, // error page.
     Pt = 9004, // port.
     Rt = [], // route.
     SvcCs = {}, // service case.
-    SvcPthPtrm = null, // service path patterm.
     UpldFlPth; // uploaded file path.
 
 const App = express();
@@ -75,7 +75,7 @@ function Riot4Render (Rqst, Bd, Then) {
 
   Bd.initialize(
     Rqst,
-    {},
+    url.parse(Rqst.url),
     (Cd, Dt) => {
       if (Cd < 0) { return Then(null, `<!-- can not render '${Nm}' component. -->`); }
 
@@ -454,7 +454,6 @@ function Initialize (Cfg) {
     },
     ...Cfg.route ];
   SvcCs = Cfg.service.case || {};
-  SvcPthPtrm = Cfg.service.pathPatterm || null;
   UpldFlPth = Cfg.uploadFilePath;
 
   Cfg.port && (Pt = Cfg.port);
@@ -498,10 +497,6 @@ function Initialize (Cfg) {
     });
   });
 
-  // ====
-
-  App.use(SvcPthPtrm, BodyParse); // parse body for all services.
-
   // ==== service route. ====
 
   const SvcCsEntrs = Object.entries(SvcCs); // service case entries.
@@ -513,7 +508,10 @@ function Initialize (Cfg) {
     for (let j = 0; j < MthdsEntrs.length; j++) {
       const [ Mthd, Service ] = MthdsEntrs[j];
 
-      App[Mthd] && App[Mthd](Pth, (Rqst, Rspns) => ServiceRespond(Rqst, Rspns, Service));
+      if (App[Mthd]) {
+        App[Mthd](Pth, BodyParse); // parse body for each service.
+        App[Mthd](Pth, (Rqst, Rspns) => { ServiceRespond(Rqst, Rspns, Service) });
+      }
     }
   }
 
