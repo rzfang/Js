@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -35,7 +35,7 @@
     "sqlite3": "5.0.3"
   },
   "devDependencies": {
-    "eslint": "^8.15.0",
+    "eslint": "^8.16.0",
     "eslint-plugin-json": "^3.1.0",
     "pre-commit": "^1.2.2"
   },
