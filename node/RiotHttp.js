@@ -1,4 +1,5 @@
 import busboy from 'busboy';
+import cookieParser from 'cookie-parser';
 import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
@@ -117,6 +118,8 @@ function HeaderGet (RMI, PgCnfg) {
   if (Fvcn) { HdStr += `<link rel='icon' href='favicon.ico' type='${Fvcn}'/>\n`; }
 
   if (Fd) { HdStr += `<link rel='alternate' type='application/atom+xml' title='atom' href='${Fd}'/>\n`; }
+
+  HdStr += `<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'/>\n`;
 
   return HdStr;
 }
@@ -426,6 +429,7 @@ function Build (Cfg, Ext = 'js') {
 function Initialize (Cfg) {
   Log('initialize...');
 
+  App.use(cookieParser());
   App.use(helmet({ contentSecurityPolicy: false })); // header handle for security.
 
   // === set up all config variables. ===
