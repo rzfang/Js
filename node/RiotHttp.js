@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
+import nodeSass from 'node-sass';
 import path from 'path';
 import riot from 'riot';
 import ssr from '@riotjs/ssr';
@@ -364,7 +365,7 @@ function BodyParse (Rqst, Rspns, Next) {
 
 /*
   @ config object.
-  @ extension. optional, can be js|ms. */
+  @ extension. optional, can be js|mjs. */
 function Build (Cfg, Ext = 'js') {
   Log('build...');
 
@@ -387,7 +388,7 @@ function Build (Cfg, Ext = 'js') {
     const FlPth = path.resolve(process.env.PWD, Cmpnt)
     const { ExprtDflt, Imprts, MdlsCd } = Riot4Compile2(FlPth, Ext, true),
           FlInfo = path.parse(FlPth); // file information.
-    const Cd = Imprts.join('\n') + '\n\n' + MdlsCd.map(({ Cd }) => Cd).join('\n\n') + ExprtDflt + '\n',
+    const Cd = Imprts.join('\n') + '\n\n' + MdlsCd.map(({ Cd }) => Cd).join('\n\n') + ExprtDflt + '\n', // code.
           RE = `${FlInfo.name}\\.riot\\..+\\.m?js$`;
     const Hsh = crypto.createHash('shake256', { outputLength: 5 }).update(Cd).digest('hex'); // hash.
     const JsFlPth = FlPth.replace('.riot', `.riot.${Hsh}.${Ext}`);
@@ -422,6 +423,70 @@ function Build (Cfg, Ext = 'js') {
 
     return JsFlPth;
   });
+
+  // === compile SCSS to CSS. ===
+
+  const CssFls = Pgs
+    .reduce(
+      (CssFls, Pg) => {
+        if (!Is.Array(Pg.css)) { Log(`page's css is not an array.`, 'warn'); }
+
+        Pg.css.forEach(CSS => {
+          if (!CssFls.includes(CSS)) { CssFls.push(CSS); }
+        });
+
+        return CssFls;
+      },
+      []);
+
+  CssFls.forEach(CssFl => {
+      let FlPth = path.resolve(process.env.PWD, CssFl); // file path.
+      let FlInfo = path.parse(FlPth);
+
+      if (FlPth.substr(-5) === '.scss') {
+        const Src = fs.readFileSync(FlPth, 'utf8'), // 'Src' = Source.
+              CSS = nodeSass.renderSync({ data: Src }).css.toString().replace(/\n +/g, ' ').replace(/\n\n/g, "\n");
+        const Hsh = crypto.createHash('shake256', { outputLength: 5 }).update(CSS).digest('hex'); // hash.
+        const RE = `${FlInfo.name}\\..+\\.css$`.replace(/\./g, '.');
+
+        FlPth = FlPth.replace('.scss', `.${Hsh}.css`);
+        FlInfo = path.parse(FlPth);
+
+        if (!fs.existsSync(FlPth)) {
+          const OldFls = FilesFind(FlInfo.dir, new RegExp(RE));
+
+          if (OldFls.length > 0) {
+            OldFls.forEach(OldFl => { fs.unlinkSync(OldFl); }); // remove old files.
+          }
+
+          fs.writeFileSync(FlPth, CSS);
+          Log(`${FlPth} compiled and saved.`);
+        }
+
+        // override original page import SCSS files.
+        Object.values({ ...Cfg.page, ...Cfg.errorPage }).forEach(Pg => {
+          if (!Is.Array(Pg.css)) { return; }
+
+          Pg.css.forEach((Fl, Idx) => {
+            if (Fl.substr(-5) !== '.scss') { return; }
+
+            const NwFlNm = FlInfo.name.substr(0, FlInfo.name.indexOf('.')),
+                  OldFlNm = Fl.substr(Fl.lastIndexOf('/') + 1).replace('.scss', '');
+
+            if(NwFlNm === OldFlNm) { Pg.css[Idx] = FlInfo.base; }
+          });
+        });
+      }
+
+      Cfg.route.push({
+        path: new RegExp(FlInfo.base + '$'),
+        type: 'resource',
+        location: FlInfo.dir,
+        nameOnly: true
+      });
+    });
+
+  // ===
 
   return this;
 }
