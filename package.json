@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.3.6",
+  "version": "0.3.8",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -24,15 +24,15 @@
   },
   "homepage": "https://github.com/rzfang/Js#readme",
   "dependencies": {
-    "@riotjs/compiler": "^6.0.4",
-    "@riotjs/ssr": "^8.1.1",
+    "@riotjs/compiler": "^6.3.2",
+    "@riotjs/ssr": "^8.1.2",
     "async": "^3.2.2",
     "busboy": "^1.6.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.1",
     "helmet": "^4.0.0",
     "node-sass": "^7.0.0",
-    "riot": "^6.0.0",
+    "riot": "^7.0.5",
     "sqlite3": "5.0.3"
   },
   "devDependencies": {
