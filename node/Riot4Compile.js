@@ -2,26 +2,27 @@ import async from 'async';
 import fs from 'fs';
 import path from 'path';
 import sass from 'node-sass';
-import { compile, registerPreprocessor } from '@riotjs/compiler';
+// import { compile, registerPreprocessor } from '@riotjs/compiler';
+import { compile } from '@riotjs/compiler';
 
 import Cch from './Cache.js';
 import Log from '../Log.js';
 
-registerPreprocessor(
-  'css',
-  'scss',
-  Cd => {
-    // const { file } = options;
+// registerPreprocessor(
+//   'css',
+//   'scss',
+//   Cd => {
+//     // const { file } = options;
 
-    const Css = sass.renderSync({ data: Cd }).css.toString()
-      .replace(/\n +/g, ' ')
-      .replace(/\n\n/g, '\n')
-      .replace(/\}/g, '}\n')
-      .replace(/\n /g, '\n')
-      .replace(/ > /g, '>');
+//     const Css = sass.renderSync({ data: Cd }).css.toString()
+//       .replace(/\n +/g, ' ')
+//       .replace(/\n\n/g, '\n')
+//       .replace(/\}/g, '}\n')
+//       .replace(/\n /g, '\n')
+//       .replace(/ > /g, '>');
 
-    return { code: Css, map: null };
-  });
+//     return { code: Css, map: null };
+//   });
 
 function SourceCodeSplit (SrcCd) {
   if (!SrcCd) { return []; }
