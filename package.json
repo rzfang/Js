@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.3.8",
+  "version": "0.4.0",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
