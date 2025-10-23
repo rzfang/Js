@@ -1,19 +1,18 @@
-export { Is } from './Is.js';
-export { Log } from './Log.js';
-import Is from './Is.js';
-import Log from './Log.js';
-
-export { Cache } from './node/Cache.js';
-export { SQLite } from './node/SQLite.js';
-import Cache from './node/Cache.js';
-import SQLite from './node/SQLite.js';
-
-import DOM from './browser/DOM.js';
+import cache from './node/cache.mjs';
+import dom from './browser/dom.mjs';
+import is from './is.mjs';
+import log from './log.mjs';
+import sqlite from './node/sqlite.mjs';
 
 export default {
-  Cache,
-  DOM,
-  Is,
-  Log,
-  SQLite,
+  cache,
+  Cache: cache, // ToDo: deprecated. the alias.
+  dom,
+  DOM: dom, // ToDo: deprecated. the alias.
+  is,
+  Is: is, // ToDo: deprecated. the alias.
+  log,
+  Log: log, // ToDo: deprecated. the alias.
+  sqlite,
+  SQLite: sqlite, // ToDo: deprecated. the alias.
 };
