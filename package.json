@@ -1,13 +1,9 @@
 {
   "name": "rzjs",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
-  "scripts": {
-    "lint": "eslint --ext .js,.json ./*.js ./node/*",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rzfang/Js.git"
@@ -23,51 +19,24 @@
     "url": "https://github.com/rzfang/Js/issues"
   },
   "homepage": "https://github.com/rzfang/Js#readme",
+  "scripts": {
+    "lint": "eslint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "sqlite3": "5.1.5"
   },
   "devDependencies": {
-    "eslint": "^8.16.0",
+    "@eslint/js": "^9.30.1",
+    "@eslint/json": "^0.12.0",
+    "@eslint/markdown": "^7.0.0",
+    "@stylistic/eslint-plugin": "^5.1.0",
+    "eslint": "^9.30.1",
     "eslint-plugin-json": "^3.1.0",
+    "globals": "^16.3.0",
     "pre-commit": "^1.2.2"
   },
   "pre-commit": [
     "lint"
-  ],
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es6": true,
-      "jquery": true,
-      "node": true
-    },
-    "extends": "eslint:recommended",
-    "parserOptions": {
-      "ecmaVersion": 11,
-      "sourceType": "module"
-    },
-    "plugins": [
-      "json"
-    ],
-    "rules": {
-      "no-console": [
-        "warn",
-        {
-          "allow": [
-            "warn",
-            "error"
-          ]
-        }
-      ],
-      "no-redeclare": [
-        "warn",
-        {
-          "builtinGlobals": true
-        }
-      ],
-      "no-unused-vars": [
-        "warn"
-      ]
-    }
-  }
+  ]
 }
