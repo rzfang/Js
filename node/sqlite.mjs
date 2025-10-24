@@ -3,12 +3,12 @@ import sqlite3 from 'sqlite3'; //.verbose();
 export class SQLite {
   /*
     @ path. */
-  constructor (Pth) {
+  constructor (path) {
     this.Db = null;
 
-    if (!Pth || typeof Pth !== 'string' ) { return; }
+    if (!path || typeof path !== 'string' ) { return; }
 
-    const Db = new sqlite3.Database(Pth, sqlite3.OPEN_READWRITE);
+    const Db = new sqlite3.Database(path, sqlite3.OPEN_READWRITE);
 
     if (!Db) { return; }
 
@@ -31,19 +31,25 @@ export class SQLite {
     @ SQL command string.
     @ parameters. should be an array.
     < a Promise object. */
-  Query (SQL, Prms = []) {
-    return new Promise ((Resolve, Reject) => {
-      if (!this.Db) { return Reject(-1); }
+  Query (sql, params = []) {
+    return new Promise ((resolve, reject) => {
+      if (!this.Db) {
+        return reject(-1);
+      }
 
-      if (!SQL || !Prms || typeof SQL !== 'string' || !(Prms instanceof Array)) { return Reject(-2); }
+      if (!sql || !params || typeof sql !== 'string' || !(params instanceof Array)) {
+        return reject(-2);
+      }
 
       this.Db.all(
-        SQL,
-        Prms,
-        (Err, Rst) => {
-          if (Err) { return Reject(Err); }
+        sql,
+        params,
+        (error, result) => {
+          if (error) {
+            return reject(error);
+          }
 
-          Resolve(Rst || []);
+          resolve(result || []);
         });
     });
   }
@@ -51,38 +57,44 @@ export class SQLite {
   /*
     @ command. should be 'BEGIN' | 'COMMIT' | 'ROLLBACK'.
     < a Promise object. */
-  Transaction (Cmd) {
-    return new Promise ((Resolve, Reject) => {
-      if (!this.Db) { return Reject(-1); }
+  Transaction (command) {
+    return new Promise ((resolve, reject) => {
+      if (!this.Db) {
+        return reject(-1);
+      }
 
-      if (!Cmd || typeof Cmd !== 'string') { return Reject(-2); }
+      if (!command || typeof command !== 'string') {
+        return reject(-2);
+      }
 
-      let SQL;
+      let sql;
 
-      Cmd = Cmd.toUpperCase();
+      command = command.toUpperCase();
 
-      switch (Cmd) {
+      switch (command) {
         case 'BEGIN':
-          SQL = 'BEGIN TRANSACTION;';
+          sql = 'BEGIN TRANSACTION;';
 
           break;
 
         case 'ROLLBACK':
         case 'COMMIT':
-          SQL = Cmd + ';';
+          sql = command + ';';
 
           break;
 
         default:
-          return Reject(-3);
+          return reject(-3);
       }
 
       this.Db.exec(
-        SQL,
-        (Err) => {
-          if (Err) { return Reject(-4, Err); }
+        sql,
+        (error) => {
+          if (error) {
+            return reject(-4, error);
+          }
 
-          Resolve();
+          resolve();
         });
     });
   }
@@ -92,19 +104,26 @@ export class SQLite {
     @ field name.
     @ parameter.
     < a Promise object. */
-  IsARowExist (Tbl, Fld, Prm) {
+  IsARowExist (table, field, param) {
     return new Promise ((Resolve, Reject) => {
       if (!this.Db) { return Reject(-1); }
 
-      if (!Tbl || !Fld || !Prm || typeof Tbl !== 'string' || typeof Fld !== 'string' || typeof Prm !== 'string') {
+      if (
+        !table ||
+        !field ||
+        !param ||
+        typeof table !== 'string' ||
+        typeof field !== 'string' ||
+        typeof param !== 'string'
+      ) {
         return Reject(-2);
       }
 
-      const CntFld = `COUNT(${Fld})`;
+      const CntFld = `COUNT(${field})`;
 
       this.Db.get(
-        `SELECT ${CntFld} FROM ${Tbl} WHERE ${Fld} = ? LIMIT 1;`,
-        [ Prm ],
+        `SELECT ${CntFld} FROM ${table} WHERE ${field} = ? LIMIT 1;`,
+        [ param ],
         (Err, Rst) => { // error, result.
           if (Err) { return Resolve(false, Err); }
 
@@ -115,41 +134,47 @@ export class SQLite {
 
   /*
     @ table name.
-    @ extra info for condition. optional, default null, format { Fld, Prms }
+    @ extra info for condition. optional, default null, format { field, params }
       @ field name. optional, default '' to ignore extra info.
       @ parameters. optional, default [].
     < a Promise object. */
-  TableRows (Tbl, { Fld = '', Prms = [] } = {}) {
-    return new Promise ((Resolve, Reject) => {
-      if (!this.Db) { return Reject(-1); }
+  TableRows (table, { field = '', params = [] } = {}) {
+    return new Promise ((resolve, reject) => {
+      if (!this.Db) {
+        return reject(-1);
+      }
 
-      if (!Tbl || typeof Tbl !== 'string') { return Reject(-2); }
+      if (!table || typeof table !== 'string') {
+        return reject(-2);
+      }
 
-      let SQL = 'SELECT COUNT(*) FROM ' + Tbl,
-          FnPrms = []; // fine values.
+      const fineParams = [];
 
-      if (Fld && Prms && typeof Fld === 'string' && Prms instanceof Array && Prms.length > 0) {
-        let SQLHls = []; // SQL prepare statment holes.
+      let sql = 'SELECT COUNT(*) FROM ' + table;
 
-        for (let i = 0; i < Prms.length; i++) {
-          if (typeof Prms[i] === 'string') {
-            FnPrms.push(Prms[i]);
-            SQLHls.push('?');
+      if (field && params && typeof field === 'string' && params instanceof Array && params.length > 0) {
+        let holes = []; // sql prepare statment holes.
+
+        for (let i = 0; i < params.length; i++) {
+          if (typeof params[i] === 'string') {
+            fineParams.push(params[i]);
+            holes.push('?');
           }
         }
 
-        SQLHls = SQLHls.join(', ');
-        SQL += ` WHERE ${Fld} IN (${SQLHls})`;
+        holes = holes.join(', ');
+        sql += ` WHERE ${field} IN (${holes})`;
       }
 
       this.Db.get(
-        SQL + ';',
-        FnPrms,
-        (Err, Rst) => { // error, result.
-          if (Err) { return Resolve(0, Err); }
+        sql + ';',
+        fineParams,
+        (error, result) => { // error, result.
+          if (error) { return resolve(0, error); }
 
-          Resolve(Rst['COUNT(*)'] || 0);
-        });
+          resolve(result['COUNT(*)'] || 0);
+        }
+      );
     });
   }
 
@@ -157,22 +182,27 @@ export class SQLite {
     @ table name.
     @ number of data which been get, optional , default 1.
     < a Promise object. */
-  RandomGet (Tbl, Nbr = 1) {
-    return new Promise((Resolve, Reject) => {
-      if (!this.Db) { return Reject(-1); }
+  RandomGet (table, number = 1) {
+    return new Promise((resolve, reject) => {
+      if (!this.Db) {
+        return reject(-1);
+      }
 
-      if (!Tbl || typeof Tbl !== 'string' || typeof Nbr !== 'number' || Nbr < 1) { return Reject(-2); }
-
-      let SQL = `SELECT * FROM ${Tbl} ORDER BY RANDOM() LIMIT ${Nbr};`;
+      if (!table || typeof table !== 'string' || typeof number !== 'number' || number < 1) {
+        return reject(-2);
+      }
 
       this.Db.get(
-        SQL,
+        `SELECT * FROM ${table} ORDER BY RANDOM() LIMIT ${number};`,
         [],
-        (Err, Rst) => {
-          if (Err) { return Resolve([], Err); }
+        (error, result) => {
+          if (error) {
+            return resolve([], error);
+          }
 
-          Resolve(Rst || []);
-        });
+          resolve(result || []);
+        }
+      );
     });
   }
 }

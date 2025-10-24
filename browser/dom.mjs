@@ -18,49 +18,55 @@ let DOM;
     //==== extend functions. ====
 
     NodeList.prototype.ToArray = function ToArray () {
-      let DA = []; // 'DA' = Data Array.
+      const datas = [];
 
-      for (let i = this.length; i--; DA.unshift(this[i]));
+      for (let i = this.length; i--; datas.unshift(this[i]));
 
-      return DA;
+      return datas;
     };
 
     /* chainable.
-      'Fctn(Obj, Idx)' = Function.
+      'func(obj, index)' = Function.
         @ each item of array.
         @ Index of item in array.
         @ Length of array.
         < false to end loop immediately.
       < array itself as OK, null as error. */
-    Array.prototype.Each = function Each (Fctn) {
-      if (typeof Fctn !== 'function') { return null; }
+    Array.prototype.Each = function Each (func) {
+      if (typeof func !== 'function') {
+        return null;
+      }
 
       for (let i = 0; i < this.length; i++) {
-        let Rst = Fctn(this[i], i, this.length);
+        const result = func(this[i], i, this.length);
 
-        if (typeof Rst === 'boolean' && !Rst) { break; }
+        if (typeof result === 'boolean' && !result) {
+          break;
+        }
       }
 
       return this;
     };
 
     /*
-      'Fctn(Obj, Idx)' = Function.
+      'func(obj, index)' = Function.
         @ each item of array.
         @ Index of item in array.
         @ Length of array.
         < true to save item, or false to drop it.
       < new array the items saved, or [] otherwise. */
-    Array.prototype.Some = function Some (Fctn) {
-      let PckA = []; // 'PckA' = Picked item Array.
+    Array.prototype.Some = function Some (func) {
+      const items = []; // picked item Array.
 
       for (let i = 0; i < this.length; i++) {
-          let Rst = Fctn(this[i], i, this.length);
+        const result = func(this[i], i, this.length);
 
-          if (typeof Rst === 'boolean' && Rst) { PckA.push(this[i]); }
+        if (typeof result === 'boolean' && result) {
+          items.push(this[i]);
+        }
       }
 
-      return PckA;
+      return items;
     };
 
     /*
@@ -110,51 +116,51 @@ let DOM;
     /*
       @ filter Selector String. optional.
       < children nodes array, or []. */
-    Element.prototype.Children = function Children (SltrStr) {
-      let NdA = this.childNodes,
-          RstNdA = [];
+    Element.prototype.Children = function Children (selectorString) {
+      let elements = this.childNodes;
+      let resultElements = [];
 
-      for (let i = 0; i < NdA.length; i++) {
-        if (NdA[i].nodeType === 1) { RstNdA.push(NdA[i]); }
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].nodeType === 1) { resultElements.push(elements[i]); }
       }
 
-      if (SltrStr && typeof SltrStr === 'string') {
-        let SltrNdA = [], // 'SltrNdA' = Selector matched Nodes array.
-            OrgID = this.id; // 'OrgID' = Original ID.
+      if (selectorString && typeof selectorString === 'string') {
+        const matchedElements = []; // selector matched elements.
+        const originalId = this.id;
 
         if (!this.id) {
-          let Dt = new Date();
+          const date = new Date();
 
-          this.id = 'TmpID' + Dt.getTime().toString();
+          this.id = 'TmpID' + date.getTime().toString();
         }
 
-        SltrStr = '#' + this.id + ' > ' + SltrStr;
-        NdA = document.querySelectorAll(SltrStr);
+        selectorString = '#' + this.id + ' > ' + selectorString;
+        elements = document.querySelectorAll(selectorString);
 
-        for (let i = 0; i < NdA.length; i++)         {
-          if (NdA[i].nodeType === 1) { SltrNdA.push(NdA[i]); }
+        for (let i = 0; i < elements.length; i++)         {
+          if (elements[i].nodeType === 1) { matchedElements.push(elements[i]); }
         }
 
-        if (SltrNdA.length === 0) { return []; }
+        if (matchedElements.length === 0) { return []; }
 
-        NdA = [];
+        elements = [];
 
-        for (let i = 0; i < RstNdA.length; i++) {
-          for (let j = 0; j < SltrNdA.length; j++) {
-            if (RstNdA[i] === SltrNdA[j]) {
-              NdA.push(RstNdA[i]);
+        for (let i = 0; i < resultElements.length; i++) {
+          for (let j = 0; j < matchedElements.length; j++) {
+            if (resultElements[i] === matchedElements[j]) {
+              elements.push(resultElements[i]);
 
               break;
             }
           }
         }
 
-        if (OrgID !== this.id) { this.id = OrgID; }
+        if (originalId !== this.id) { this.id = originalId; }
 
-        RstNdA = NdA;
+        resultElements = elements;
       }
 
-      return RstNdA;
+      return resultElements;
     };
 
     Element.prototype.Prev = function Prev () {
@@ -176,18 +182,18 @@ let DOM;
     /*
       @ filter Selector String. optional.
       Need: Children(). */
-    Element.prototype.Siblings = function Siblings (SltrStr) {
-      let NdA = this.parentNode.Children(SltrStr);
+    Element.prototype.Siblings = function Siblings (selectorString) {
+      const elements = this.parentNode.Children(selectorString);
 
-      for (let i = 0; i < NdA.length; i++) {
-        if (NdA[i] === this) {
-          NdA.splice(i, 1);
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i] === this) {
+          elements.splice(i, 1);
 
           break;
         }
       }
 
-      return NdA;
+      return elements;
     };
 
     Element.prototype.Append = function Append (Elt) {
@@ -209,11 +215,13 @@ let DOM;
       return this;
     };
 
-    Element.prototype.Index = function Index (SltrStr) {
-      let NdA = this.Above().Children(SltrStr);
+    Element.prototype.Index = function Index (selectorString) {
+      const elements = this.Above().Children(selectorString);
 
-      for (let i in NdA) {
-        if (NdA[i] === this) { return i; }
+      for (const i in elements) {
+        if (elements[i] === this) {
+          return i;
+        }
       }
 
       return -1;
@@ -234,7 +242,7 @@ let DOM;
     };
 
     /* Not Yet. */
-    Element.prototype.Attr = function Attr (Attr, Val) {
+    Element.prototype.Attr = function Attr (_attr, _val) {
     };
 
     Event.prototype.Element = function Element () {
@@ -246,16 +254,23 @@ let DOM;
 
   /* Extend some function to any Element to simulate JQuery Selector.
     @ Element object or Selector string.
-    < node array, or null as empty; */
-  function Find (ES) {
-    let Tp = typeof ES,
-        NdA = null; // 'NdA' = Node Array.
+    < element array, or null as empty; */
+  function Find (es) {
+    const type = typeof es;
 
-    if (Tp === 'object' && ES.tagName !== 'undefined' && ES.nodeType === 1) { NdA = [ES]; }
-    else if (Tp === 'string') { NdA = document.querySelectorAll(ES).ToArray(); }
-    else { NdA = null; }
+    let elements = null; // 'elements' = Node Array.
 
-    return NdA;
+    if (type === 'object' && es.tagName !== 'undefined' && es.nodeType === 1) {
+      elements = [ es ];
+    }
+    else if (type === 'string') {
+      elements = document.querySelectorAll(es).ToArray();
+    }
+    else {
+      elements = null;
+    }
+
+    return elements;
   }
 
   function NewNode (TgNm) {
@@ -266,21 +281,28 @@ let DOM;
     @ target, the DOM object, can also be window object.
     @ event name, an existed event name string.
     @ new function which will be add into the event. */
-  function EventListen (Tgt, EvtNm, NewFctn) {
-    if (!Tgt || !EvtNm || typeof Tgt !== 'object' || typeof EvtNm !== 'string' || typeof NewFctn !== 'function')
-    { return; }
+  function EventListen (target, eventName, newFunction) {
+    if (
+      !target ||
+      !eventName ||
+      typeof target !== 'object' ||
+      typeof eventName !== 'string' ||
+      typeof newFunction !== 'function'
+    ) {
+      return;
+    }
 
-    if (typeof Tgt[EvtNm] !== 'function') {
-      Tgt[EvtNm] = NewFctn;
+    if (typeof target[eventName] !== 'function') {
+      target[eventName] = newFunction;
 
       return;
     }
 
-    let OldFctn = Tgt[EvtNm];
+    const oldFunction = target[eventName];
 
-    Tgt[EvtNm] = Evt => {
-      OldFctn(Evt);
-      NewFctn(Evt);
+    target[eventName] = Evt => {
+      oldFunction(Evt);
+      newFunction(Evt);
     };
   }
 
@@ -288,7 +310,7 @@ let DOM;
     Find: Find,
     NewNode: NewNode,
     EventListen: EventListen,
-    Initialize: Initialize
+    Initialize: Initialize,
   };
 
   if (typeof window !== 'undefined') {

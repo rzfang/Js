@@ -33,10 +33,10 @@ export const Cache = {
   /*
     @ key name.
     < true | false. */
-  IsFileCached (Ky) {
-    let FlInfo = this.Cchs.Fls && this.Cchs.Fls[Ky] || null;
+  IsFileCached (key) {
+    const fileInfo = this.Cchs.Fls && this.Cchs.Fls[key] || null;
 
-    if (!FlInfo || !FlInfo.Dt || !FlInfo.Str) { return false; }
+    if (!fileInfo || !fileInfo.Dt || !fileInfo.Str) { return false; }
 
     return true;
   },
@@ -46,14 +46,14 @@ export const Cache = {
   /* get the value.
     @ key name.
     < cached data, or null. */
-  Get (Ky) {
-    if (!this.Cchs.Dt[Ky] || !this.Cchs.Dt[Ky]['Vl'] || !this.Cchs.Dt[Ky]['Dt'] || !this.Cchs.Dt[Ky]['ScndLmt']) {
+  Get (key) {
+    if (!this.Cchs.Dt[key] || !this.Cchs.Dt[key]['Vl'] || !this.Cchs.Dt[key]['Dt'] || !this.Cchs.Dt[key]['ScndLmt']) {
       return null;
     }
 
-    let Drtn = ((new Date()).getTime() - this.Cchs.Dt[Ky]['Dt']) / 1000; // duration.
+    const duration = ((new Date()).getTime() - this.Cchs.Dt[key]['Dt']) / 1000;
 
-    return Drtn > this.Cchs.Dt[Ky]['ScndLmt'] ? null : this.Cchs.Dt[Ky]['Vl'];
+    return duration > this.Cchs.Dt[key]['ScndLmt'] ? null : this.Cchs.Dt[key]['Vl'];
   },
   /* set the value.
     @ key name.
@@ -68,20 +68,20 @@ export const Cache = {
     return true;
   },
   Recycle () {
-    const NwTm = (new Date()).getTime(); // now time.
-    let Kys = Object.keys(this.Cchs.Dt); // keys.
+    const keys = Object.keys(this.Cchs.Dt);
+    const nowTime = (new Date()).getTime();
 
-    for (let i = 0; i < Kys.length; i++) {
-      let Tgt = this.Cchs.Dt[Kys[i]]; // target.
+    for (let i = 0; i < keys.length; i++) {
+      const target = this.Cchs.Dt[keys[i]];
 
-      if (!Tgt || !Tgt.Vl || !Tgt.Dt || !Tgt.ScndLmt) {
-        delete this.Cchs.Dt[Kys[i]];
+      if (!target || !target.Vl || !target.Dt || !target.ScndLmt) {
+        delete this.Cchs.Dt[keys[i]];
         continue;
       }
 
-      let Drtn = (NwTm - Tgt.Dt) / 1000; // duration.
+      const duration = (nowTime - target.Dt) / 1000;
 
-      if (Drtn > Tgt.ScndLmt) { delete this.Cchs.Dt[Kys[i]]; }
+      if (duration > target.ScndLmt) { delete this.Cchs.Dt[keys[i]]; }
     }
   },
   /*
@@ -96,7 +96,7 @@ export const Cache = {
     const MlScnd = Mnt * 60 * 1000; // millisecond.
 
     setInterval(this.Recycle.bind(this), MlScnd);
-  }
+  },
 };
 
 export default Cache;
