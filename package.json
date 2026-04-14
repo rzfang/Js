@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -24,7 +24,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "sqlite3": "6.0.1"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
