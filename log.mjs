@@ -1,37 +1,37 @@
-/* eslint no-console: 0 */
+/* eslint no-console: 0, complexity: [ 'warn', 15 ] */
 
-export function Log (Info, Lv = 2) {
-  switch (Lv) {
+export function log (info, level = 2) {
+  switch (level) {
     case 0:
     case 'error':
       console.error('\x1b[41m%s\x1b[0m', '\n[ERROR]');
-      console.error(Info);
+      console.error(info);
 
       break;
 
     case 1:
     case 'warn':
       console.warn('\x1b[41m%s\x1b[0m', '\n[WARN ]');
-      console.warn(Info);
+      console.warn(info);
 
       break;
 
     case 2:
     case 'log':
       console.log('\x1b[42m%s\x1b[0m', '\n[ LOG ]');
-      console.log(Info);
+      console.log(info);
 
       break;
 
     case 3:
     case 'debug':
       console.log('\x1b[30m\x1b[47m%s\x1b[0m', '\n[DEBUG]');
-      console.log(Info);
+      console.log(info);
 
       break;
   }
 
-  return typeof Info !== 'string' ? Info.toString() : Info;
+  return typeof info === 'string' ? info : String(info);
 }
 
-export default Log;
+export default log;

@@ -3,6 +3,8 @@ import js from '@eslint/js';
 import json from '@eslint/json';
 import markdown from '@eslint/markdown';
 import stylistic from '@stylistic/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import tsPlugin from '@typescript-eslint/eslint-plugin'
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
@@ -25,7 +27,7 @@ export default defineConfig([
     language: 'markdown/gfm',
     plugins: { markdown },
   },
-  {
+  { // for personal coding style.
     extends: [ 'js/recommended' ],
     files: [ '**/*.{js,mjs,cjs}' ],
     ignores: [ 'DST/*' ],
@@ -49,6 +51,38 @@ export default defineConfig([
           functions: 'never',
           imports: 'always-multiline',
           objects: 'always-multiline',
+        },
+      ],
+    },
+  },
+  { // for strict coding style.
+    files: [ '**/*.{js,mjs,cjs}' ],
+    languageOptions: { parser: tsParser },
+    plugins: { '@typescript-eslint': tsPlugin },
+    rules: {
+      'max-depth': [ 'warn', 3 ],
+      'no-implicit-coercion': 'warn',
+      camelcase: [ 'warn' ],
+      complexity: [ 'warn', 10 ],
+      eqeqeq: [ 'error', 'always' ],
+      '@typescript-eslint/naming-convention': [
+        'warn',
+        {
+          selector: 'variableLike',
+          format: [ 'camelCase' ],
+        },
+        {
+          selector: 'function',
+          format: [ 'camelCase' ],
+        },
+        {
+          selector: 'typeLike',
+          format: [ 'PascalCase' ],
+        },
+        {
+          selector: 'variable',
+          modifiers: [ 'const' ],
+          format: [ 'camelCase', 'UPPER_CASE' ],
         },
       ],
     },

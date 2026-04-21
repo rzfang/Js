@@ -1,64 +1,63 @@
-export const Is = {
-  Boolean: function (Obj) { return (typeof Obj === 'boolean'); },
-  Number: function (Obj) { return (typeof Obj === 'number'); },
-  String: function (Obj) { return (typeof Obj === 'string'); },
-  Function: function (Obj) { return (typeof Obj === 'function'); },
-  Object: function (Obj) { return (typeof Obj === 'object'); },
-  Undefined: function (Obj) { return (typeof Obj === 'undefined'); },
-  Array: function (Obj) { return Array.isArray(Obj); },
-  Date: function (Obj) { return (Obj instanceof Date); },
-  RegExp: function (Obj) { return (Obj instanceof RegExp); },
-  Promise: function (Obj) {
-    // return (typeof Obj !== 'object' || !Obj.hasOwnProperty('then') || !Obj.hasOwnProperty('catch'));
+export const is = {
+  Boolean: function (obj) { return (typeof obj === 'boolean'); },
+  Number: function (obj) { return (typeof obj === 'number'); },
+  String: function (obj) { return (typeof obj === 'string'); },
+  Function: function (obj) { return (typeof obj === 'function'); },
+  Object: function (obj) { return (typeof obj === 'object'); },
+  Undefined: function (obj) { return (typeof obj === 'undefined'); },
+  Array: function (obj) { return Array.isArray(obj); },
+  Date: function (obj) { return (obj instanceof Date); },
+  RegExp: function (obj) { return (obj instanceof RegExp); },
+  Promise: function (obj) {
+    // return (typeof obj !== 'object' || !obj.hasOwnProperty('then') || !obj.hasOwnProperty('catch'));
     return (
-      typeof Obj !== 'object' ||
-      !Object.prototype.hasOwnProperty.call(Obj, 'then') ||
-      !Object.prototype.hasOwnProperty.call(Obj, 'catch')
+      typeof obj !== 'object' ||
+      !Object.prototype.hasOwnProperty.call(obj, 'then') ||
+      !Object.prototype.hasOwnProperty.call(obj, 'catch')
     );
   },
-  EMail: function (Str) {
-    if (typeof Str !== 'string') { return false; }
+  EMail: function (obj) {
+    if (typeof obj !== 'string') { return false; }
 
-    return (/^[\w.]+@.{2,16}\.[0-9a-z]{2,3}$/).test(Str);
+    return (/^[\w.]+@.{2,16}\.[0-9a-z]{2,3}$/).test(obj);
   },
-  jQuery: function (Obj) { return (typeof jQuery !== 'undefined' && Obj instanceof jQuery); },
-  URL: function (Obj) {
-    if (typeof Obj !== 'string') { return false; }
+  jQuery: function (obj) { return (typeof jQuery !== 'undefined' && obj instanceof jQuery); },
+  URL: function (obj) {
+    if (typeof obj !== 'string') { return false; }
 
-    return (/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/).test(Obj);
+    return (/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/).test(obj);
   }, // from here : https://stackoverflow.com/questions/1701898/how-to-detect-whether-a-string-is-in-url-format-using-javascript
-  UUID: function (Obj) {
-    if (typeof Obj !== 'string') { return false; }
+  UUID: function (obj) {
+    if (typeof obj !== 'string') { return false; }
 
     return (
-      Obj.match(/^[0-9a-fA-F]{32}$/) ||
-      Obj.match(/^[0-9a-fA-F]{13}$/) ||
-      Obj.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/) ||
-      Obj.match(/^[0-9a-fA-F]{22}$/)
+      obj.match(/^[0-9a-fA-F]{32}$/) ||
+      obj.match(/^[0-9a-fA-F]{13}$/) ||
+      obj.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/) ||
+      obj.match(/^[0-9a-fA-F]{22}$/)
     ) ? true : false;
   },
 
-  ArrayEqual: function (A, B) {
-    if (!Array.isArray(A) || !Array.isArray(B)) { false; }
+  ArrayEqual: function (a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) { false; }
 
-    if (A === B) { return true; }
+    if (a === b) { return true; }
 
-    if (A.length !== B.length) { return false; }
+    if (a.length !== b.length) { return false; }
 
-    for (let i = 0; i < A.length; i++) {
-      if (A[i] !== B[i]) { return false; }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) { return false; }
     }
 
     return true;
   },
   /* test if a string is a TimeStamp (YYYY-MM-DD HH:II:SS).
-    @ time string.
     < true | false. */
-  TimeStamp: function (TmStr) {
-    if (typeof TmStr !== 'string' || TmStr.length === 0) { return false; }
+  TimeStamp: function (obj) {
+    if (typeof obj !== 'string' || obj.length === 0) { return false; }
 
-    return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(TmStr);
+    return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(obj);
   },
 };
 
-export default Is;
+export default is;
