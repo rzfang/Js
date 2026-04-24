@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -24,16 +24,16 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "sqlite3": "^5.1.7"
-  },
-  "devDependencies": {
     "@eslint/js": "^10",
     "@eslint/json": "^1",
     "@eslint/markdown": "^8",
-    "@fastify/pre-commit": "^2",
     "@stylistic/eslint-plugin": "^5",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@fastify/pre-commit": "^2",
     "eslint": "^10",
     "globals": "^16.3.0"
   },

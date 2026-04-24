@@ -1,3 +1,4 @@
 - naming style to be camel case.
-- eslint config export.
 - Ts.
+- unit test.
+- npm publish.
