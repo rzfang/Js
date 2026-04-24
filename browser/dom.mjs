@@ -5,103 +5,19 @@ let dom;
 
   /* Extend some function to any Element to simulate JQuery DOM Traveler. */
   function initialize () {
-    if (!Array.prototype.indexOf) { // handle indexOf function of array.
-      Array.prototype.indexOf = data => {
-        for (let i = 0; i < this.length; i++) {
-          if (data === this[i]) { return true; }
-        }
-
-        return false;
-      };
-    }
-
-    //==== extend functions. ====
-
-    NodeList.prototype.toArray = function toArray () {
-      const datas = [];
-
-      for (let i = this.length; i--; datas.unshift(this[i]));
-
-      return datas;
-    };
-
-    /* chainable.
-      'func(obj, index)' = Function.
-        @ each item of array.
-        @ Index of item in array.
-        @ Length of array.
-        < false to end loop immediately.
-      < array itself as OK, null as error. */
-    Array.prototype.each = function each (func) {
-      if (typeof func !== 'function') {
-        return null;
-      }
-
-      for (let i = 0; i < this.length; i++) {
-        const result = func(this[i], i, this.length);
-
-        if (typeof result === 'boolean' && !result) {
-          break;
-        }
-      }
-
-      return this;
-    };
-
-    /*
-      'func(obj, index)' = Function.
-        @ each item of array.
-        @ Index of item in array.
-        @ Length of array.
-        < true to save item, or false to drop it.
-      < new array the items saved, or [] otherwise. */
-    Array.prototype.some = function some (func) {
-      const items = []; // picked item Array.
-
-      for (let i = 0; i < this.length; i++) {
-        const result = func(this[i], i, this.length);
-
-        if (typeof result === 'boolean' && result) {
-          items.push(this[i]);
-        }
-      }
-
-      return items;
-    };
-
     /*
       @ Selector String.
       < nodes array, or []. */
     Element.prototype.find = function find (selectorString) {
       if (typeof selectorString !== 'string' || selectorString.length === 0) { return []; }
 
-      return this.querySelectorAll(selectorString).ToArray();
+      return Array.from(this.querySelectorAll(selectorString));
     };
 
-    /*
-      < first child node. */
-    Element.prototype.firstChild = function firstChild () {
-      let element = this.firstChild;
-
-      while (element && element.nodeType !== 1) { element = element.nextSibling; }
-
-      return element;
-    };
-
-    /*
-      < last child node. */
-    Element.prototype.lastChild = function lastChild () {
-      let element = this.lastChild;
-
-      while (element && element.nodeType !== 1) { element = element.previousSibling; }
-
-      return element;
-    };
-
-    /* find Above (parent) node of current node.
+    /* find above (parent) node of current node.
       @ Level to source up. optional, default: 1.
       < parent node, or document node as top level node. */
-    Element.prototype.above = function above (level) {
+    Element.prototype.above = function above (level = 1) {
       let parentNode = this.parentNode;
 
       if (typeof level !== 'number' || level < 1) { level = 1; }
@@ -116,7 +32,7 @@ let dom;
     /*
       @ filter Selector String. optional.
       < children nodes array, or []. */
-    Element.prototype.children = function children (selectorString) {
+    Element.prototype.getChildren = function getChildren (selectorString) {
       let elements = this.childNodes;
       let resultElements = [];
 
@@ -181,9 +97,9 @@ let dom;
 
     /*
       @ filter Selector String. optional.
-      Need: Children(). */
+      Need: getChildren(). */
     Element.prototype.siblings = function siblings (selectorString) {
-      const elements = this.parentNode.Children(selectorString);
+      const elements = this.parentNode.getChildren(selectorString);
 
       for (let i = 0; i < elements.length; i++) {
         if (elements[i] === this) {
@@ -216,7 +132,7 @@ let dom;
     };
 
     Element.prototype.index = function index (selectorString) {
-      const elements = this.Above().Children(selectorString);
+      const elements = this.above().getChildren(selectorString);
 
       for (const i in elements) {
         if (elements[i] === this) {
@@ -228,7 +144,7 @@ let dom;
     };
 
     Element.prototype.remove = function remove () {
-      this.Above().removeChild(this);
+      this.above()?.removeChild(this);
 
       return this;
     };
@@ -244,10 +160,6 @@ let dom;
     /* Not Yet. */
     // Element.prototype.attr = function attr (_attr, _val) {
     // };
-
-    Event.prototype.element = function element () {
-      return (this.srcElement && !this.target) ? this.srcElement : this.target;
-    };
   }
 
   //==== define global Z object with useful functions. ====
@@ -264,7 +176,7 @@ let dom;
       elements = [ es ];
     }
     else if (type === 'string') {
-      elements = document.querySelectorAll(es).ToArray();
+      elements = Array.from(document.querySelectorAll(es));
     }
     else {
       elements = null;

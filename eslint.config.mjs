@@ -30,7 +30,6 @@ export default defineConfig([
   { // for personal coding style.
     extends: [ 'js/recommended' ],
     files: [ '**/*.{js,mjs,cjs}' ],
-    ignores: [ 'DST/*' ],
     plugins: { '@stylistic': stylistic, js },
     rules: {
       '@stylistic/array-bracket-spacing': [ 'error', 'always' ],
