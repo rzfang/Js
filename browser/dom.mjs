@@ -185,8 +185,14 @@ let dom;
     return elements;
   }
 
-  function newNode (tagName) {
+  function create (tagName) {
     return document.createElement(tagName);
+  }
+
+  function newNode (tagName) {
+    console.log('newNode is deprecated, use create instead.', 'warn');
+
+    return create(tagName);
   }
 
   /*
@@ -219,6 +225,7 @@ let dom;
   }
 
   dom = {
+    create,
     eventListen,
     find,
     initialize,

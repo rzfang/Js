@@ -1,5 +1,7 @@
 import sqlite3 from 'sqlite3'; //.verbose();
 
+import log from '../log.mjs';
+
 export class SQLite {
   /*
     @ path. */
@@ -15,23 +17,35 @@ export class SQLite {
     this.Db = Db;
   }
 
-  IsReady () {
+  isReady () {
     return this.Db ? true : false;
   }
+  // To Do: deprecated. alias.
+  IsReady () {
+    log('IsReady is deprecated. use isReady instead.', 'warn');
 
-  Close () {
+    return this.isReady();
+  }
+
+  close () {
     if (!this.Db) { return; }
 
     this.Db.close();
 
     this.Db = null;
   }
+  // To Do: deprecated. alias.
+  Close () {
+    log('Close is deprecated. use close instead.', 'warn');
+
+    return this.close();
+  }
 
   /*
     @ SQL command string.
     @ parameters. should be an array.
     < a Promise object. */
-  Query (sql, params = []) {
+  query (sql, params = []) {
     return new Promise ((resolve, reject) => {
       if (!this.Db) {
         return reject(-1);
@@ -53,11 +67,17 @@ export class SQLite {
         });
     });
   }
+  // To Do: deprecated. alias.
+  Query (sql, params = []) {
+    log('Query is deprecated. use query instead.', 'warn');
+
+    return this.query(sql, params);
+  }
 
   /*
     @ command. should be 'BEGIN' | 'COMMIT' | 'ROLLBACK'.
     < a Promise object. */
-  Transaction (command) {
+  transaction (command) {
     return new Promise ((resolve, reject) => {
       if (!this.Db) {
         return reject(-1);
@@ -98,13 +118,19 @@ export class SQLite {
         });
     });
   }
+  // To Do: deprecated. alias.
+  Transaction (command) {
+    log('Transaction is deprecated. use transaction instead.', 'warn');
+
+    return this.transaction(command);
+  }
 
   /* check if a row is exist in a table.
     @ table name.
     @ field name.
     @ parameter.
     < a Promise object. */
-  IsARowExist (table, field, param) {
+  isARowExist (table, field, param) {
     return new Promise ((Resolve, Reject) => {
       if (!this.Db) { return Reject(-1); }
 
@@ -131,6 +157,12 @@ export class SQLite {
         });
     });
   }
+  // To Do: deprecated. alias.
+  IsARowExist (table, field, param) {
+    log('IsARowExist is deprecated. use isARowExist instead.', 'warn');
+
+    return this.isARowExist(table, field, param);
+  }
 
   /*
     @ table name.
@@ -138,7 +170,7 @@ export class SQLite {
       @ field name. optional, default '' to ignore extra info.
       @ parameters. optional, default [].
     < a Promise object. */
-  TableRows (table, { field = '', params = [] } = {}) {
+  tableRows (table, { field = '', params = [] } = {}) {
     return new Promise ((resolve, reject) => {
       if (!this.Db) {
         return reject(-1);
@@ -177,12 +209,18 @@ export class SQLite {
       );
     });
   }
+  // To Do: deprecated. alias.
+  TableRows (table, { field = '', params = [] } = {}) {
+    log('TableRows is deprecated. use TableRows instead.', 'warn');
+
+    return this.tableRows(table, { field, params });
+  }
 
   /*
     @ table name.
     @ number of data which been get, optional , default 1.
     < a Promise object. */
-  RandomGet (table, number = 1) {
+  randomGet (table, number = 1) {
     return new Promise((resolve, reject) => {
       if (!this.Db) {
         return reject(-1);
@@ -204,6 +242,12 @@ export class SQLite {
         }
       );
     });
+  }
+  // To Do: deprecated. alias.
+  RandomGet (table, number = 1) {
+    log('RandomGet is deprecated. use randomGet instead.', 'warn');
+
+    return this.randomGet(table, number);
   }
 }
 

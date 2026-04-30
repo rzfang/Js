@@ -1,4 +1,9 @@
 - naming style to be camel case.
+  - WebTool not follow yet.
+  - SkyZone not follow yet.
+  - riot-4-fun not follow yet.
 - Ts.
 - unit test.
 - npm publish.
+  - currently can use github tag.
+- dom.mjs refactor.
