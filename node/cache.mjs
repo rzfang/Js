@@ -60,7 +60,7 @@ export const Cache = {
   // To Do: deprecated. alias.
   Has (key) {
     log('Has is deprecated. use has instead.', 'warn');
-    this.Has(key);
+    this.has(key);
   },
 
   /* get the value.
@@ -78,7 +78,7 @@ export const Cache = {
   // To Do: deprecated. alias.
   Get (key) {
     log('Get is deprecated. use get instead.', 'warn');
-    this.Get(key);
+    this.get(key);
   },
 
   /* set the value.
