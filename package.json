@@ -30,6 +30,9 @@
     "@stylistic/eslint-plugin": "^5",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
+    "lodash.debounce": "^4.0.8",
+    "lodash.merge": "^4.6.2",
+    "lodash.throttle": "^4.1.1",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
