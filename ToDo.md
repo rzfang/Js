@@ -6,4 +6,3 @@
 - unit test.
 - npm publish.
   - currently can use github tag.
-- dom.mjs refactor.
