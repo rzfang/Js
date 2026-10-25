@@ -1,50 +1,54 @@
 import fs from 'fs';
 
+import is from '../is.mjs';
 import log from '../log.mjs';
 
-export const Cache = {
-  Cchs: { Fls: {}, Dt: {} }, // caches, files, data.
-  IsRolling: false,
+export const cache = {
+  caches: { files: {}, data: {} },
+  isRolling: false,
   /*
     @ file path.
-    @ callback (error code, result data). */
-  fileLoad (FlPth, Clbck) {
-    const This = this;
+    @ callback (error, stream, time).
+      @ error code.
+      @ file context string.
+      @ time stamp. */
+  fileLoad (filePath, callback) {
+    const caches = this.caches;
 
-    if (this.Cchs.Fls[FlPth]) {
-      const { Dt = null, Str = '' } = this.Cchs.Fls[FlPth];
+    if (caches.files[filePath]) {
+      const { timeStamp = null, string = '' } = caches.files[filePath];
 
-      if (!Dt || !Str) { return Clbck(-1); }
+      if (!timeStamp || !string) { return callback(-1); }
 
-      return Clbck(1, Str, Dt);
+      return callback(1, string, timeStamp);
     }
 
     fs.readFile(
-      FlPth,
+      filePath,
       'utf8',
-      function (Err, FlStr) { // error, file string.
-        if (Err) { return Clbck(-2); }
+      function (error, filString) {
+        if (error) { return callback(-2); }
 
-        const Dt = (new Date()).getTime();
+        const timeStamp = Date.now();
 
-        This.Cchs.Fls[FlPth] = { Dt, Str: FlStr };
+        caches.files[filePath] = { timeStamp, string: filString };
 
-        Clbck(0, FlStr, Dt);
+        callback(0, filString, timeStamp);
       });
   },
   // To Do: deprecated. alias.
-  FileLoad (FlPth, Clbck) {
+  FileLoad (filePath, callback) {
     log('FileLoad is deprecated. use fileLoad instead.', 'warn');
-    this.fileLoad(FlPth, Clbck);
+    this.fileLoad(filePath, callback);
   },
 
   /*
     @ key name.
     < true | false. */
   isFileCached (key) {
-    const fileInfo = this.Cchs.Fls && this.Cchs.Fls[key] || null;
+    const fileInfo = this.caches.files && this.caches.files[key] || null;
 
-    if (!fileInfo || !fileInfo.Dt || !fileInfo.Str) { return false; }
+    if (!fileInfo || !fileInfo.timeStamp || !fileInfo.string) { return false; }
 
     return true;
   },
@@ -54,8 +58,8 @@ export const Cache = {
     this.isFileCached(key);
   },
 
-  has (Ky) {
-    return this.Cchs.Dt[Ky] ? true : false;
+  has (key) {
+    return this.caches.data[key] ? true : false;
   },
   // To Do: deprecated. alias.
   Has (key) {
@@ -67,13 +71,18 @@ export const Cache = {
     @ key name.
     < cached data, or null. */
   get (key) {
-    if (!this.Cchs.Dt[key] || !this.Cchs.Dt[key]['Vl'] || !this.Cchs.Dt[key]['Dt'] || !this.Cchs.Dt[key]['ScndLmt']) {
+    if (
+      !this.caches.data[key] ||
+      !this.caches.data[key]['value'] ||
+      !this.caches.data[key]['timeStamp'] ||
+      !this.caches.data[key]['secondLimit']
+    ) {
       return null;
     }
 
-    const duration = ((new Date()).getTime() - this.Cchs.Dt[key]['Dt']) / 1000;
+    const duration = (Date.now() - this.caches.data[key]['timeStamp']) / 1000;
 
-    return duration > this.Cchs.Dt[key]['ScndLmt'] ? null : this.Cchs.Dt[key]['Vl'];
+    return duration > this.caches.data[key]['secondLimit'] ? null : this.caches.data[key]['value'];
   },
   // To Do: deprecated. alias.
   Get (key) {
@@ -86,34 +95,34 @@ export const Cache = {
     @ value.
     @ second limit, default 300 seconds.
     < return true or false. */
-  set (Ky, Vl, ScndLmt = 300) {
-    if (typeof Ky !== 'string' || typeof ScndLmt !== 'number') { return false; }
+  set (key, value, secondLimit = 300) {
+    if (typeof key !== 'string' || typeof secondLimit !== 'number') { return false; }
 
-    this.Cchs.Dt[Ky] = { Vl: Vl, Dt: (new Date()).getTime(), ScndLmt: ScndLmt };
+    this.caches.data[key] = { value, timeStamp: Date.now(), secondLimit };
 
     return true;
   },
   // To Do: deprecated. alias.
-  Set (Ky, Vl, ScndLmt = 300) {
+  Set (key, value, secondLimit = 300) {
     log('Set is deprecated. use set instead.', 'warn');
-    this.set(Ky, Vl, ScndLmt);
+    this.set(key, value, secondLimit);
   },
 
   recycle () {
-    const keys = Object.keys(this.Cchs.Dt);
-    const nowTime = (new Date()).getTime();
+    const keys = Object.keys(this.caches.data);
+    const nowTime = Date.now();
 
     for (let i = 0; i < keys.length; i++) {
-      const target = this.Cchs.Dt[keys[i]];
+      const target = this.caches.data[keys[i]];
 
-      if (!target || !target.Vl || !target.Dt || !target.ScndLmt) {
-        delete this.Cchs.Dt[keys[i]];
+      if (!target || !target.value || !target.timeStamp || !target.secondLimit) {
+        delete this.caches.data[keys[i]];
         continue;
       }
 
-      const duration = (nowTime - target.Dt) / 1000;
+      const duration = (nowTime - target.timeStamp) / 1000;
 
-      if (duration > target.ScndLmt) { delete this.Cchs.Dt[keys[i]]; }
+      if (duration > target.secondLimit) { delete this.caches.data[keys[i]]; }
     }
   },
   // To Do: deprecated. alias.
@@ -124,22 +133,22 @@ export const Cache = {
 
   /*
     @ minute to trigger recycling. */
-  recycleRoll (Mnt) {
-    if (this.IsRolling) { return; }
+  recycleRoll (minutes = 1) {
+    if (this.isRolling) { return; }
 
-    this.IsRolling = true;
+    this.isRolling = true;
 
-    if (!Mnt || typeof Mnt !== 'number' || Mnt < 1) { Mnt = 1; }
+    if (!is.Number(minutes)) { minutes = 1; }
 
-    const MlScnd = Mnt * 60 * 1000; // millisecond.
+    const milliseconds = minutes * 60 * 1000;
 
-    setInterval(this.Recycle.bind(this), MlScnd);
+    setInterval(this.recycle.bind(this), milliseconds);
   },
   // To Do: deprecated. alias.
-  RecycleRoll (Mnt) {
+  RecycleRoll (minutes) {
     log('RecycleRoll is deprecated. use recycleRoll instead.', 'warn');
-    this.recycleRoll(Mnt);
+    this.recycleRoll(minutes);
   },
 };
 
-export default Cache;
+export default cache;

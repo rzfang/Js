@@ -1,3 +1,5 @@
+/* eslint complexity: [ 'warn', 15 ] */
+
 import sqlite3 from 'sqlite3'; //.verbose();
 
 import log from '../log.mjs';
@@ -6,19 +8,19 @@ export class SQLite {
   /*
     @ path. */
   constructor (path) {
-    this.Db = null;
+    this.db = null;
 
     if (!path || typeof path !== 'string' ) { return; }
 
-    const Db = new sqlite3.Database(path, sqlite3.OPEN_READWRITE);
+    const db = new sqlite3.Database(path, sqlite3.OPEN_READWRITE);
 
-    if (!Db) { return; }
+    if (!db) { return; }
 
-    this.Db = Db;
+    this.db = db;
   }
 
   isReady () {
-    return this.Db ? true : false;
+    return this.db ? true : false;
   }
   // To Do: deprecated. alias.
   IsReady () {
@@ -28,11 +30,11 @@ export class SQLite {
   }
 
   close () {
-    if (!this.Db) { return; }
+    if (!this.db) { return; }
 
-    this.Db.close();
+    this.db.close();
 
-    this.Db = null;
+    this.db = null;
   }
   // To Do: deprecated. alias.
   Close () {
@@ -47,7 +49,7 @@ export class SQLite {
     < a Promise object. */
   query (sql, params = []) {
     return new Promise ((resolve, reject) => {
-      if (!this.Db) {
+      if (!this.db) {
         return reject(-1);
       }
 
@@ -55,7 +57,7 @@ export class SQLite {
         return reject(-2);
       }
 
-      this.Db.all(
+      this.db.all(
         sql,
         params,
         (error, result) => {
@@ -79,7 +81,7 @@ export class SQLite {
     < a Promise object. */
   transaction (command) {
     return new Promise ((resolve, reject) => {
-      if (!this.Db) {
+      if (!this.db) {
         return reject(-1);
       }
 
@@ -107,7 +109,7 @@ export class SQLite {
           return reject(-3);
       }
 
-      this.Db.exec(
+      this.db.exec(
         sql,
         (error) => {
           if (error) {
@@ -131,8 +133,8 @@ export class SQLite {
     @ parameter.
     < a Promise object. */
   isARowExist (table, field, param) {
-    return new Promise ((Resolve, Reject) => {
-      if (!this.Db) { return Reject(-1); }
+    return new Promise ((resolve, reject) => {
+      if (!this.db) { return reject(-1); }
 
       if (
         !table ||
@@ -142,18 +144,18 @@ export class SQLite {
         typeof field !== 'string' ||
         typeof param !== 'string'
       ) {
-        return Reject(-2);
+        return reject(-2);
       }
 
-      const CntFld = `COUNT(${field})`;
+      const countField = `COUNT(${field})`;
 
-      this.Db.get(
-        `SELECT ${CntFld} FROM ${table} WHERE ${field} = ? LIMIT 1;`,
+      this.db.get(
+        `SELECT ${countField} FROM ${table} WHERE ${field} = ? LIMIT 1;`,
         [ param ],
-        (Err, Rst) => { // error, result.
-          if (Err) { return Resolve(false, Err); }
+        (error, result) => {
+          if (error) { return resolve(false, error); }
 
-          Resolve((!Rst[CntFld] || Rst[CntFld] < 1) ? false : true);
+          resolve((!result[countField] || result[countField] < 1) ? false : true);
         });
     });
   }
@@ -172,7 +174,7 @@ export class SQLite {
     < a Promise object. */
   tableRows (table, { field = '', params = [] } = {}) {
     return new Promise ((resolve, reject) => {
-      if (!this.Db) {
+      if (!this.db) {
         return reject(-1);
       }
 
@@ -198,7 +200,7 @@ export class SQLite {
         sql += ` WHERE ${field} IN (${holes})`;
       }
 
-      this.Db.get(
+      this.db.get(
         sql + ';',
         fineParams,
         (error, result) => { // error, result.
@@ -222,7 +224,7 @@ export class SQLite {
     < a Promise object. */
   randomGet (table, number = 1) {
     return new Promise((resolve, reject) => {
-      if (!this.Db) {
+      if (!this.db) {
         return reject(-1);
       }
 
@@ -230,7 +232,7 @@ export class SQLite {
         return reject(-2);
       }
 
-      this.Db.get(
+      this.db.get(
         `SELECT * FROM ${table} ORDER BY RANDOM() LIMIT ${number};`,
         [],
         (error, result) => {
