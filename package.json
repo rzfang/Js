@@ -1,6 +1,6 @@
 {
   "name": "rzjs",
-  "version": "0.6.10",
+  "version": "0.7.0",
   "description": "RZ's personal Js libraries.",
   "main": "index.js",
   "type": "module",
@@ -33,7 +33,7 @@
     "lodash.debounce": "^4.0.8",
     "lodash.merge": "^4.6.2",
     "lodash.throttle": "^4.1.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@fastify/pre-commit": "^2",
@@ -42,5 +42,9 @@
   },
   "pre-commit": [
     "lint"
-  ]
+  ],
+  "allowScripts": {
+    "@fastify/pre-commit@2.2.2": true,
+    "sqlite3@6.0.1": true
+  }
 }
